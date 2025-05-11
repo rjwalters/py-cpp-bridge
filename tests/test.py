@@ -1,11 +1,18 @@
 import numpy as np
-from cython_processor import PyArrayProcessor
 
+# Import the compiled Python module (not the Cython declarations)
+from py_cpp_bridge.cython_processor import (
+    PyArrayProcessor,
+    get_numpy_type_name
+)
+
+# Rebuild the NumPy types using the exposed function
+np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("values"))
 
 def main():
     # Create test data
     size = 5
-    data = np.array([1, 2, 3, 4, 5], dtype=np.uint8)
+    data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
 
     # Create processor
     processor = PyArrayProcessor(size)
@@ -18,14 +25,14 @@ def main():
 
     # Test Method 2: New contiguous array
     print("\n=== Testing Method 2: New contiguous array ===")
-    data2 = np.array([10, 20, 30, 40, 50], dtype=np.uint8)
+    data2 = np.array([10, 20, 30, 40, 50], dtype=np_values_type)
     result2 = processor.process_new(data2)
     print(f"Input: {data2}")
     print(f"Output: {result2}")
 
     # Test Method 3: Manual casting (closest to your code)
     print("\n=== Testing Method 3: Manual casting ===")
-    data3 = np.array([5, 15, 25, 35, 45], dtype=np.uint8)
+    data3 = np.array([5, 15, 25, 35, 45], dtype=np_values_type)
     result3 = processor.process_manual(data3)
     print(f"Input: {data3}")
     print(f"Output: {result3}")

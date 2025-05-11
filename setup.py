@@ -22,12 +22,29 @@ class CustomBuildExt(BuildExtCommand):
             self.compiler.compiler_so.remove("-DNDEBUG")
         super().build_extensions()
 
-# Define the extension module
+# Define source files with proper paths
+SRC_DIR = "src"
+CYTHON_DIR = os.path.join(SRC_DIR, "cython_processor")
+COMMON_DIR = os.path.join(SRC_DIR, "common")
+
+# Cython source file
+PYX_FILE = os.path.join(CYTHON_DIR, "cython_processor.pyx")
+
+# C++ implementation file (now in common directory)
+CPP_FILE = os.path.join(COMMON_DIR, "cpp_processor.cpp")
+
+# Define the extension module with proper package path
 ext_modules = [
     Extension(
-        "cython_processor",
-        sources=["cython_processor.pyx", "cpp_processor.cpp"],
-        include_dirs=[numpy.get_include()],
+        "cython_processor",  # Full package path for module
+        sources=[PYX_FILE, CPP_FILE],  # Combines Cython wrapper with C++ implementation
+        include_dirs=[
+            numpy.get_include(), 
+            SRC_DIR,            # Include src directory
+            COMMON_DIR,         # Include common directory for C++ headers
+            CYTHON_DIR,         # Include cython directory
+            ".",                # Include root directory
+        ],
         language="c++",
         define_macros=[
             ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"),
@@ -38,7 +55,7 @@ ext_modules = [
 ]
 
 # Set build directory based on debug mode
-BUILD_DIR = "build"
+BUILD_DIR = "build_debug" if DEBUG else "build"
 os.makedirs(BUILD_DIR, exist_ok=True)
 
 # Detect number of CPU cores for parallel compilation on Linux
@@ -51,6 +68,9 @@ compiler_directives = {
     "annotation_typing": True,  # Enable type annotations
     "c_string_encoding": "utf8",
     "c_string_type": "str",
+    # Always enable these for better error messages during development
+    "binding": True,         # Generate Python wrapper code
+    "embedsignature": True,  # Include docstrings in the C code
 }
 
 # Add debug-specific directives when DEBUG is True
@@ -87,7 +107,7 @@ else:
 
 # Setup
 setup(
-    name="cython_processor",
+    name="py-cpp-bridge",  # Changed to match repo name
     version="0.1.0",
     ext_modules=cythonize(
         ext_modules,
@@ -95,12 +115,14 @@ setup(
         nthreads=num_threads,
         annotate=DEBUG,  # Generate annotated HTML files in debug mode to see Python → C translation
         compiler_directives=compiler_directives,
+        include_path=[CYTHON_DIR, SRC_DIR, COMMON_DIR],  # Include directories for finding .pxd files
     ),
-    packages=find_packages(),
+    package_dir={"": "src"},  # Tell setuptools packages are under src/
+    packages=find_packages(where="src"),  # Find packages under src/
     include_package_data=True,
     install_requires=["numpy"],
     cmdclass={"build_ext": CustomBuildExt},  # Use our custom build_ext class
-    description="Python C/C++ interop experiment with Cython",
-    url="https://github.com/yourusername/cppython-experiments",
+    description="Python/C++ bridging examples using various technologies (Cython, pybind11)",
+    url="https://github.com/yourusername/py-cpp-bridge",
     python_requires=">=3.7",
 )

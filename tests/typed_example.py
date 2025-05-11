@@ -4,7 +4,13 @@ from typing import List
 
 import numpy as np
 import numpy.typing as npt
-from cython_processor import PyArrayProcessor
+cimport cython_processor
+from cython_processor cimport (
+    ArrayProcessor, 
+    c_value_type, 
+    NUMPY_VALUE_TYPE, 
+    get_numpy_type_name
+)
 
 
 def process_batches(data_batches: List[npt.NDArray[np.uint8]], batch_size: int) -> List[npt.NDArray[np.uint8]]:
