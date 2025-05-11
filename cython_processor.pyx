@@ -14,10 +14,18 @@ This module provides three different approaches for passing NumPy arrays to C++:
 
 import numpy as np
 cimport numpy as cnp
-from libc.stdint cimport uint8_t, uint32_t
+from libc.stddef cimport size_t
 
 # Import from the .pxd file
-from cython_processor cimport ArrayProcessor
+from cython_processor cimport (
+    ArrayProcessor, 
+    c_value_type, 
+    np_value_type, 
+    get_numpy_type_name as cpp_get_numpy_type_name
+    )
+
+# expose for python
+np_value_type = np.dtype(cpp_get_numpy_type_name(<const char*>b"value"))
 
 # Initialize NumPy
 cnp.import_array()
@@ -32,7 +40,7 @@ cdef class PyArrayProcessor:
     cdef ArrayProcessor* _cpp_processor
     cdef cnp.ndarray _results_view
     
-    def __cinit__(self, uint32_t size):
+    def __cinit__(self, size_t size):
         """
         Initialize the ArrayProcessor with a specified size.
         
@@ -53,7 +61,7 @@ cdef class PyArrayProcessor:
         # NumPy array view will be cleaned up automatically
     
     # Method 1: Using a pre-allocated buffer (reused for each call)
-    def process_preallocated(self, cnp.ndarray[uint8_t, ndim=1] data):
+    def process_preallocated(self, cnp.ndarray[c_value_type, ndim=1] data):
         """
         Process data using a pre-allocated buffer.
         
@@ -87,15 +95,15 @@ cdef class PyArrayProcessor:
             raise ValueError(f"Expected array of size {self._cpp_processor.get_size()}, got {data.shape[0]}")
         
         # Process the array
-        self._cpp_processor.process_array(<uint8_t*>data.data, data.shape[0])
+        self._cpp_processor.process_array(<c_value_type*>data.data, data.shape[0])
         
         # Create a NumPy view of the results if needed
         if self._results_view is None:
-            self._results_view = np.zeros(self._cpp_processor.get_size(), dtype=np.uint8)
+            self._results_view = np.zeros(self._cpp_processor.get_size(), dtype=np_value_type)
         
         # Copy results to the view
-        cdef uint32_t i
-        cdef uint8_t* results = self._cpp_processor.get_results()
+        cdef size_t i
+        cdef c_value_type* results = self._cpp_processor.get_results()
         for i in range(self._cpp_processor.get_size()):
             self._results_view[i] = results[i]
         
@@ -130,30 +138,30 @@ cdef class PyArrayProcessor:
         Raises:
             ValueError: If data length doesn't match expected size
         """
-        cdef cnp.ndarray[uint8_t, ndim=1] data_array
+        cdef cnp.ndarray[c_value_type, ndim=1] data_array
         
         # Ensure data is a contiguous array of the right type and shape
-        data_array = np.ascontiguousarray(data, dtype=np.uint8)
+        data_array = np.ascontiguousarray(data, dtype=np_value_type)
         
         if data_array.shape[0] != self._cpp_processor.get_size():
             raise ValueError(f"Expected array of size {self._cpp_processor.get_size()}, got {data_array.shape[0]}")
         
         # Process the array
-        self._cpp_processor.process_array(<uint8_t*>data_array.data, data_array.shape[0])
+        self._cpp_processor.process_array(<c_value_type*>data_array.data, data_array.shape[0])
         
         # Create a NumPy view of the results
-        cdef cnp.ndarray[uint8_t, ndim=1] results_array = np.zeros(self._cpp_processor.get_size(), dtype=np.uint8)
+        cdef cnp.ndarray[c_value_type, ndim=1] results_array = np.zeros(self._cpp_processor.get_size(), dtype=np_value_type)
         
         # Copy results to the array
-        cdef uint32_t i
-        cdef uint8_t* results = self._cpp_processor.get_results()
+        cdef size_t i
+        cdef c_value_type* results = self._cpp_processor.get_results()
         for i in range(self._cpp_processor.get_size()):
             results_array[i] = results[i]
         
         return results_array
     
-    # Method 3: Taking a buffer and manual casting (closest to your step function)
-    def process_manual(self, cnp.ndarray actions):
+    # Method 3: Taking a buffer and manual casting
+    def process_manual(self, cnp.ndarray values):
         """
         Process data with manual copying and casting.
         
@@ -174,28 +182,28 @@ cdef class PyArrayProcessor:
             Cases where precise control over type conversion is needed
             
         Args:
-            actions: Input array of any type
+            values: Input array of any type
             
         Returns:
             New array of processed values (doubled input values)
         """
         cdef:
-            uint32_t size = self._cpp_processor.get_size()
-            uint32_t i
-            cnp.ndarray[uint8_t, ndim=1] buffer = np.zeros(size, dtype=np.uint8)
+            size_t size = self._cpp_processor.get_size()
+            size_t i
+            cnp.ndarray[c_value_type, ndim=1] buffer = np.zeros(size, dtype=np_value_type)
         
         # Manual copy with explicit casting
-        for i in range(min(size, actions.shape[0])):
-            buffer[i] = <uint8_t>actions[i]
+        for i in range(min(size, values.shape[0])):
+            buffer[i] = <c_value_type>values[i]
         
         # Process the buffer
-        self._cpp_processor.process_array(<uint8_t*>buffer.data, size)
+        self._cpp_processor.process_array(<c_value_type*>buffer.data, size)
         
         # Create results array
-        cdef cnp.ndarray[uint8_t, ndim=1] results = np.zeros(size, dtype=np.uint8)
+        cdef cnp.ndarray[c_value_type, ndim=1] results = np.zeros(size, dtype=np_value_type)
         
         # Copy results
-        cdef uint8_t* results_ptr = self._cpp_processor.get_results()
+        cdef c_value_type* results_ptr = self._cpp_processor.get_results()
         for i in range(size):
             results[i] = results_ptr[i]
         
