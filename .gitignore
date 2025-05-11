@@ -1,0 +1,5 @@
+*.egg-info
+*.so
+.DS_Store
+build
+cython_processor.cpp
