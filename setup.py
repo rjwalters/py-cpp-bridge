@@ -36,7 +36,7 @@ CPP_FILE = os.path.join(COMMON_DIR, "cpp_processor.cpp")
 # Define the extension module with proper package path
 ext_modules = [
     Extension(
-        "cython_processor",  # Full package path for module
+        "cython_processor.cython_processor",  # Full package path for module
         sources=[PYX_FILE, CPP_FILE],  # Combines Cython wrapper with C++ implementation
         include_dirs=[
             numpy.get_include(), 

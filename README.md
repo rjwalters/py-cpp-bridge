@@ -6,7 +6,7 @@ A demonstration project showcasing efficient Cython-based interoperability betwe
 
 This project demonstrates how to integrate high-performance C++ code with Python using Cython. It features three different approaches to memory handling and type conversion, enabling you to choose the right solution for your specific use case.
 
-The core functionality is a simple array processor that doubles each value in a uint8 array, but the techniques demonstrated can be applied to any C++ code you want to make available in Python.
+The core functionality is a simple array processor that doubles each value in an array, but the techniques demonstrated can be applied to any C++ code you want to make available in Python.
 
 ## Features
 
@@ -34,27 +34,27 @@ The core functionality is a simple array processor that doubles each value in a 
 git clone https://github.com/yourusername/py-cpp-bridge.git
 cd py-cpp-bridge
 
-# Install dependencies
-pip install -r requirements.txt
-
 # Build and install the package
-make
+make install
 ```
 
 ## Usage
 
-### Basic Example with Type Safety
+### Basic Example
 
 ```python
 import numpy as np
-from cython_processor import PyArrayProcessor, np_value_type
+from cython_processor import PyArrayProcessor
+
+# Get the correct NumPy type
+np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
 
 # Create an array processor for size 5 arrays
 processor = PyArrayProcessor(5)
 
 # Create some test data using the imported NumPy type
 # This ensures type consistency with C++ expectations
-data = np.array([1, 2, 3, 4, 5], dtype=np_value_type)
+data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
 
 # Method 1: Using pre-allocated buffer (most efficient)
 result1 = processor.process_preallocated(data)
@@ -79,12 +79,12 @@ import numpy as np
 import numpy.typing as npt
 from cython_processor import PyArrayProcessor
 
-def process_batches(data_batches: List[npt.NDArray[np.uint8]], batch_size: int) -> List[npt.NDArray[np.uint8]]:
+def process_batches(data_batches: List[npt.NDArray], batch_size: int) -> List[npt.NDArray]:
     processor = PyArrayProcessor(batch_size)
     
-    results: List[npt.NDArray[np.uint8]] = []
+    results: List[npt.NDArray] = []
     for batch in data_batches:
-        # Type checkers understand this returns NDArray[np.uint8]
+        # Type checkers understand this returns NDArray
         processed = processor.process_preallocated(batch)
         results.append(processed)
     
@@ -95,55 +95,13 @@ def process_batches(data_batches: List[npt.NDArray[np.uint8]], batch_size: int) 
 
 This project demonstrates how to maintain a single source of truth for data types between C++ and Python. The approach works as follows:
 
-1. Core type definitions are placed in `types.hpp`:
-   ```cpp
-   #ifndef TYPES_HPP
-   #define TYPES_HPP
-
-   #include <cstdint>
-   #include <cstring>
-
-   typedef float c_value_type;
-   #define NUMPY_VALUE_TYPE "uint8" // match corresponding NumPy type
-
-   // Function to provide NumPy type information to Python
-   inline const char *get_numpy_type_name(const char *type_id)
-   {
-     if (strcmp(type_id, "value") == 0)
-       return NUMPY_VALUE_TYPE;
-     return "unknown";
-   }
-
-   #endif // TYPES_HPP
-   ```
-
-2. Cython declarations in `.pxd` import these types:
-   ```cython
-   # distutils: language = c++
-   # cython: language_level=3
-
-   from libc.stdint cimport uint8_t, uint32_t
-   import numpy as np
-
-   # Forward declarations - import directly from types.hpp
-   cdef extern from "types.hpp":
-       # Core type definitions
-       ctypedef float c_value_type;
-
-       # Numpy type name constants
-       const char* NUMPY_VALUE_TYPE
-
-       # Type mapping function
-       const char* get_numpy_type_name(const char* type_id)
-       
-   # Import numpy types for C
-   np_value_type = np.dtype(get_numpy_type_name("value").decode('utf8'))
-   ```
-
-3. These types are then used consistently in both C++ and Python code, ensuring type compatibility and preventing mismatches.
+1. Core type definitions are placed in a central C++ header file
+2. Cython declarations in `.pxd` import these types
+3. Type information is exposed to Python through a dedicated function
+4. The same types are used consistently in both C++ and Python code
 
 ### Benefits:
-- Changes to a type only need to be made in one place (`types.hpp`)
+- Changes to a type only need to be made in one place
 - Automatic conversion between C++ and NumPy types
 - Type safety between languages
 - Self-documenting code with explicit type mappings
@@ -209,12 +167,6 @@ make debug
 make test
 ```
 
-### Type-Checked Example
-
-```bash
-make typed-example
-```
-
 ### Code Formatting
 
 ```bash
@@ -224,27 +176,40 @@ make format
 ## Project Structure
 
 ```
-├── cpp_processor.cpp      # C++ implementation
-├── cpp_processor.hpp      # C++ header
-├── types.hpp              # Single source of truth for types
-├── cython_processor.pxd   # Cython declarations for C++ interface
-├── cython_processor.pyi   # Python type stubs (PEP 561)
-├── cython_processor.pyx   # Cython implementation
-├── Makefile               # Build system
-├── requirements.txt       # Python dependencies
-├── setup.py               # Python package build configuration
-├── test.py                # Simple test script
-└── typed_example.py       # Example with type annotations
+├── src/
+│   ├── common/
+│   │   ├── cpp_processor.cpp    # C++ implementation
+│   │   └── cpp_processor.hpp    # C++ header
+│   ├── cython_processor/
+│   │   ├── cython_processor.pxd # Cython declarations
+│   │   └── cython_processor.pyx # Cython implementation
+│   └── pybind_processor/        # pybind11 implementation (future)
+├── tests/
+│   ├── test.py                  # Simple test script
+│   └── typed_example.py         # Example with type annotations
+├── Makefile                     # Build system
+├── setup.py                     # Python package configuration
+└── README.md                    # This file
 ```
 
 ## How It Works
 
-1. C++ code (`cpp_processor.hpp/cpp`) defines an `ArrayProcessor` class that handles uint8 arrays
-2. Type definitions in `types.hpp` provide a single source of truth for data types
-3. Cython declarations (`.pxd`) expose the C++ class and types to Cython
-4. Cython implementation (`.pyx`) creates a Python wrapper class `PyArrayProcessor`
-5. Type stubs (`.pyi`) provide type hints for Python IDEs and type checkers
-6. `setup.py` configures the build process
+1. C++ code in the `common` directory defines the core functionality
+2. Type definitions are shared between C++ and Python
+3. Cython creates Python wrappers around the C++ classes
+4. `setup.py` configures the build process with different options for debug/release
+5. The Makefile provides convenient commands for building and testing
+
+## Debugging Features
+
+When built in debug mode (`make debug`), the following features are enabled:
+
+- Bounds checking for array access
+- Initialization checks for memory views
+- Overflow checking for arithmetic operations
+- Line tracing for coverage tools
+- Profiling support
+- Annotated HTML output showing the Cython to C conversion
 
 ## License
 

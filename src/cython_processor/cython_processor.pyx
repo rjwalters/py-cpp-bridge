@@ -25,7 +25,7 @@ from cython_processor cimport (
 )
 
 # Define numpy value type using the C++ function
-np_value_type = cpp_get_numpy_type_name(b"values")
+np_value_type = cpp_get_numpy_type_name(b"value")
 
 # Initialize NumPy
 cnp.import_array()

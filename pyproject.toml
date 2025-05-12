@@ -1,0 +1,29 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "Cython>=3.0.0",
+    "numpy>=1.19.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-cpp-bridge"
+version = "0.1.0"
+description = "Python/C++ bridging examples using various technologies (Cython, pybind11)"
+readme = "README.md"
+requires-python = ">=3.7"
+license = "MIT"
+authors = [
+    {name = "Robb Walters", email = "rjwalters@gmail.com"},
+]
+dependencies = [
+    "numpy",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/rjwalters/py-cpp-bridge"
+"Bug Tracker" = "https://github.com/rjwalters/py-cpp-bridge/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}

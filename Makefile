@@ -69,19 +69,21 @@ build:
 	# Build using the common C++ code
 	$(DEBUG_FLAG) $(PYTHON) setup.py build_ext --inplace
 
+
+.PHONY: install-python
+install-python:
+	$(DEBUG_FLAG) $(PYTHON) -m pip install --upgrade pip
+	$(DEBUG_FLAG) $(PYTHON) -m pip install -r requirements.txt
+
 # Build and install the package in development mode
 .PHONY: install
-install: build
+install: install-python build
 	$(DEBUG_FLAG) $(PYTHON) -m pip install -e . $(INSTALL_FLAGS)
 
 # Run tests
 .PHONY: test
 test: build
 	$(PYTHON) $(TEST_DIR)/test.py
-
-# Run typed example
-.PHONY: typed-example
-typed-example: build
 	$(PYTHON) $(TEST_DIR)/typed_example.py
 
 # Clean the build artifacts

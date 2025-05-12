@@ -1,13 +1,10 @@
 import numpy as np
 
 # Import the compiled Python module (not the Cython declarations)
-from py_cpp_bridge.cython_processor import (
-    PyArrayProcessor,
-    get_numpy_type_name
-)
+from cython_processor import PyArrayProcessor
 
 # Rebuild the NumPy types using the exposed function
-np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("values"))
+np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
 
 def main():
     # Create test data

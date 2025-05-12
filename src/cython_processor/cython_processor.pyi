@@ -3,6 +3,18 @@ from typing import Union
 import numpy as np
 import numpy.typing as npt
 
+# Import from the .pxd file
+from cython_processor cimport (
+    ArrayProcessor,
+    c_value_type, 
+    NUMPY_VALUE_TYPE,
+    get_numpy_type_name as cpp_get_numpy_type_name
+)
+
+# Define numpy value type using the C++ function
+np_value_type = cpp_get_numpy_type_name(b"value")
+
+
 class PyArrayProcessor:
     """
     Python wrapper for C++ ArrayProcessor.
@@ -27,7 +39,7 @@ class PyArrayProcessor:
         """
         ...
 
-    def process_preallocated(self, data: npt.NDArray[np.uint8]) -> npt.NDArray[np.uint8]:
+    def process_preallocated(self, data: npt.NDArray[np_values_type]) -> npt.NDArray[np_values_type]:
         """
         Process data using a pre-allocated buffer.
 
@@ -60,7 +72,7 @@ class PyArrayProcessor:
         """
         ...
 
-    def process_new(self, data: Union[npt.NDArray, list, tuple]) -> npt.NDArray[np.uint8]:
+    def process_new(self, data: Union[npt.NDArray, list, tuple]) -> npt.NDArray[np_values_type]:
         """
         Process data by creating a new contiguous array.
 
@@ -91,7 +103,7 @@ class PyArrayProcessor:
         """
         ...
 
-    def process_manual(self, data: npt.NDArray) -> npt.NDArray[np.uint8]:
+    def process_manual(self, data: npt.NDArray) -> npt.NDArray[np_values_type]:
         """
         Process data with manual copying and casting.
 

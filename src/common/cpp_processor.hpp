@@ -7,8 +7,7 @@
 
 #include "types.hpp"
 
-class ArrayProcessor
-{
+class ArrayProcessor {
 public:
   // Constructor
   ArrayProcessor(c_value_type size);
