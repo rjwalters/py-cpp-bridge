@@ -9,7 +9,7 @@ to memory handling and type conversion.
 import numpy as np
 import numpy.typing as npt
 
-from . import _swig_processor_impl as _impl
+from . import _swig_impl as _impl
 
 
 class PyArrayProcessor:
