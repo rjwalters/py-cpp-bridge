@@ -60,6 +60,13 @@ try:
 except ImportError:
     pass
 
+try:
+    from hpy_processor import PyArrayProcessor as HpyProcessor
+
+    BRIDGES.append(("hpy", HpyProcessor))
+except ImportError:
+    pass
+
 
 def get_numpy_type():
     """Get the numpy dtype from any available bridge."""

@@ -6,8 +6,10 @@ build
 cython_processor.cpp
 **/__pycache__
 
-# Benchmark results
+# Benchmark results and artifacts
 benchmarks/results.json
+benchmarks/plots/
+benchmarks/flamegraphs/
 
 # cffi generated files
 src/cffi_processor/_cffi_impl.c

@@ -7,8 +7,8 @@ TEST_DIR := tests
 BUILD_DIR := build
 BENCH_DIR := benchmarks
 
-# Python command
-PYTHON := python
+# Python command - prefer virtual environment if available
+PYTHON := $(shell if [ -f .venv/bin/python3 ]; then echo .venv/bin/python3; elif command -v python3 >/dev/null 2>&1; then echo python3; else echo python; fi)
 
 # Help target
 .PHONY: help
@@ -22,6 +22,9 @@ help:
 	@echo "  benchmark-quick  - Run quick overhead benchmarks only"
 	@echo "  benchmark-save   - Run benchmarks and save results to JSON"
 	@echo "  benchmark-compare- Compare bridges at 1000 elements"
+	@echo "  benchmark-visualize - Visualize benchmark results (requires results.json)"
+	@echo "  benchmark-flamegraph - Generate flamegraphs with py-spy"
+	@echo "  benchmark-all    - Complete benchmark workflow (build, run, visualize)"
 	@echo "  clean            - Remove build artifacts"
 	@echo "  distclean        - Deep clean (including compiled extensions and eggs)"
 	@echo "  format           - Format C++ code with clang-format"
@@ -100,6 +103,45 @@ benchmark-compare:
 	@echo "=== Comparing bridges (10000 elements) ==="
 	$(PYTHON) -m pytest $(BENCH_DIR)/test_benchmark.py -k "n10000]" -v --benchmark-only \
 		--benchmark-columns=mean,stddev,rounds --benchmark-sort=mean
+
+# Visualize benchmark results
+.PHONY: benchmark-visualize
+benchmark-visualize:
+	@if [ ! -f $(BENCH_DIR)/results.json ]; then \
+		echo "Error: $(BENCH_DIR)/results.json not found"; \
+		echo "Run 'make benchmark-save' first to generate results"; \
+		exit 1; \
+	fi
+	@echo "=== Visualizing benchmark results ==="
+	$(PYTHON) $(BENCH_DIR)/visualize_benchmarks.py $(BENCH_DIR)/results.json
+	@echo ""
+	@echo "To generate plots, run:"
+	@echo "  $(PYTHON) $(BENCH_DIR)/visualize_benchmarks.py $(BENCH_DIR)/results.json --plot"
+
+# Generate flamegraphs with py-spy
+.PHONY: benchmark-flamegraph
+benchmark-flamegraph:
+	@echo "=== Generating flamegraphs with py-spy ==="
+	@echo "Installing py-spy if needed..."
+	@$(PYTHON) -m pip install -q py-spy || true
+	$(PYTHON) $(BENCH_DIR)/generate_flamegraph.py
+	@echo ""
+	@echo "Flamegraphs saved to $(BENCH_DIR)/flamegraphs/"
+	@echo "Open with: open $(BENCH_DIR)/flamegraphs/*.svg"
+
+# Complete benchmark workflow
+.PHONY: benchmark-all
+benchmark-all: clean build
+	@echo "=== Complete Benchmark Workflow ==="
+	@echo "1. Running benchmarks and saving results..."
+	@$(MAKE) benchmark-save
+	@echo ""
+	@echo "2. Visualizing results..."
+	@$(MAKE) benchmark-visualize
+	@echo ""
+	@echo "=== Benchmark workflow complete ==="
+	@echo "Results: $(BENCH_DIR)/results.json"
+	@echo "Run 'make benchmark-flamegraph' to generate flamegraphs (requires py-spy)"
 
 # Clean build artifacts
 .PHONY: clean

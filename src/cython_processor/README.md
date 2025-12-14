@@ -52,6 +52,33 @@ print(f"Result 3: {result3}")  # Output: [2, 4, 6, 8, 10]
 | `process_new()` | Allocates fresh array | Flexibility, auto type conversion |
 | `process_manual()` | Explicit copying/casting | Maximum control over memory |
 
+## Performance Profiling
+
+### Benchmark Results
+- **Call Overhead**: 6.11 μs (lowest among all bindings)
+- **Processing (10K elements)**: ~14.25 ms (preallocated), ~15.17 ms (new), ~15.45 ms (manual)
+
+### Generate Flamegraph
+```bash
+# Install py-spy if not already installed
+pip install py-spy
+
+# Generate flamegraph for Cython binding
+python benchmarks/generate_flamegraph.py cython
+
+# View the flamegraph
+open benchmarks/flamegraphs/cython.svg
+```
+
+### What to Expect in Flamegraphs
+Cython flamegraphs typically show:
+- **Minimal binding overhead** - Direct C extension calls with no intermediate layers
+- **Clean call stack** - Few Python→C transition frames
+- **Dominated by computation** - Most time in `cpp_processor::process_array`
+- **No template machinery** - Unlike pybind11, Cython generates straightforward C code
+
+For detailed benchmark analysis and comparisons with other bindings, see [BENCHMARKS.md](/BENCHMARKS.md).
+
 ## How It Works
 
 1. **Declaration** (`.pxd`) - Declares C++ types and functions for Cython

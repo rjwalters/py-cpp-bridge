@@ -16,7 +16,7 @@ version = "0.1.0"
 description = "Python/C++ bridging examples using various technologies (Cython, pybind11, nanobind, SWIG, ctypes, cffi, HPy)"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
+license = {text = "MIT"}
 authors = [
     {name = "Robb Walters", email = "rjwalters@gmail.com"},
 ]

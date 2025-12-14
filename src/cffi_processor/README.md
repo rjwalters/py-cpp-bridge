@@ -46,6 +46,37 @@ result3 = processor.process_manual(data)        # Manual casting
 | `process_new()` | Allocates fresh array | Flexibility, auto type conversion |
 | `process_manual()` | Explicit copying/casting | Maximum control over memory |
 
+## Performance Profiling
+
+### Benchmark Results
+⚠️ **Python 3.14 Compatibility Issue**: cffi requires the `_cffi_backend` C extension which is not yet available for Python 3.14. Benchmarks are unavailable until Python 3.11-3.13 testing is performed.
+
+**Expected Performance** (based on similar architectures):
+- **Call Overhead**: ~8 μs (medium, similar to ctypes)
+- **Processing**: Competitive with other bindings for array operations
+
+### Generate Flamegraph
+```bash
+# Install py-spy if not already installed
+pip install py-spy
+
+# Generate flamegraph for cffi binding (requires Python 3.11-3.13)
+python benchmarks/generate_flamegraph.py cffi
+
+# View the flamegraph
+open benchmarks/flamegraphs/cffi.svg
+```
+
+### What to Expect in Flamegraphs
+cffi flamegraphs typically show:
+- **Three-layer architecture** - Python wrapper → cffi-generated code → C wrapper → C++
+- **API mode overhead** - Compiled bindings with FFI interface
+- **Type conversion** - NumPy array pointer extraction and casting
+- **PyPy optimization potential** - cffi is highly optimized for PyPy JIT
+- **Clean C interface** - Explicit C API boundary visible
+
+For detailed benchmark analysis and comparisons with other bindings, see [BENCHMARKS.md](/BENCHMARKS.md).
+
 ## Architecture
 
 This implementation uses a three-layer approach:

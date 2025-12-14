@@ -185,19 +185,31 @@ execute_process(
 )
 
 if(CFFI_FOUND EQUAL 0)
-    message(STATUS "Building cffi extension")
-    set(CFFI_BUILD_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/build_cffi.py)
-
-    # Run the cffi build script during configure time
-    add_custom_target(cffi_processor ALL
-        COMMAND ${Python_EXECUTABLE} ${CFFI_BUILD_SCRIPT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor
-        COMMENT "Building cffi extension"
-        DEPENDS ${CFFI_BUILD_SCRIPT}
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/cffi_wrapper.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/cffi_wrapper.cpp
-            ${COMMON_SOURCES}
+    # Check if _cffi_backend is available (required C extension)
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -c "import _cffi_backend"
+        RESULT_VARIABLE CFFI_BACKEND_FOUND
+        OUTPUT_QUIET
+        ERROR_QUIET
     )
+
+    if(CFFI_BACKEND_FOUND EQUAL 0)
+        message(STATUS "Building cffi extension")
+        set(CFFI_BUILD_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/build_cffi.py)
+
+        # Run the cffi build script during configure time
+        add_custom_target(cffi_processor ALL
+            COMMAND ${Python_EXECUTABLE} ${CFFI_BUILD_SCRIPT}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor
+            COMMENT "Building cffi extension"
+            DEPENDS ${CFFI_BUILD_SCRIPT}
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/cffi_wrapper.h
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/cffi_wrapper.cpp
+                ${COMMON_SOURCES}
+        )
+    else()
+        message(STATUS "cffi_backend not available (Python 3.14 compatibility), skipping cffi_processor")
+    endif()
 else()
     message(STATUS "cffi not found, skipping cffi_processor")
 endif()
@@ -207,7 +219,7 @@ endif()
 # =============================================================================
 # Check if HPy is available
 execute_process(
-    COMMAND ${Python_EXECUTABLE} -c "import hpy.devel; print(hpy.devel.get_include())"
+    COMMAND ${Python_EXECUTABLE} -c "from hpy.devel import HPyDevel; print(HPyDevel().include_dir)"
     OUTPUT_VARIABLE HPY_INCLUDE_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE
     RESULT_VARIABLE HPY_FOUND
@@ -218,18 +230,10 @@ if(HPY_FOUND EQUAL 0)
     message(STATUS "Building HPy extension")
     set(HPY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/hpy_processor)
 
-    # Get HPy compile flags
+    # Get HPy extra sources
     execute_process(
-        COMMAND ${Python_EXECUTABLE} -c "import hpy.devel; print(' '.join(hpy.devel.get_extra_compile_args()))"
-        OUTPUT_VARIABLE HPY_COMPILE_FLAGS
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
-
-    # Get HPy link flags
-    execute_process(
-        COMMAND ${Python_EXECUTABLE} -c "import hpy.devel; print(' '.join(hpy.devel.get_extra_link_args()))"
-        OUTPUT_VARIABLE HPY_LINK_FLAGS
+        COMMAND ${Python_EXECUTABLE} -c "from hpy.devel import HPyDevel; print(';'.join(HPyDevel().get_extra_sources()))"
+        OUTPUT_VARIABLE HPY_EXTRA_SOURCES
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
     )
@@ -239,6 +243,7 @@ if(HPY_FOUND EQUAL 0)
         ${HPY_DIR}/hpy_processor.c
         ${CTYPES_DIR}/c_wrapper.cpp
         ${COMMON_SOURCES}
+        ${HPY_EXTRA_SOURCES}
     )
     target_include_directories(hpy_processor PRIVATE
         ${HPY_INCLUDE_DIR}
@@ -246,13 +251,10 @@ if(HPY_FOUND EQUAL 0)
         ${CTYPES_DIR}
     )
 
-    # Apply HPy compile and link flags
-    if(HPY_COMPILE_FLAGS)
-        target_compile_options(hpy_processor PRIVATE ${HPY_COMPILE_FLAGS})
-    endif()
-    if(HPY_LINK_FLAGS)
-        target_link_options(hpy_processor PRIVATE ${HPY_LINK_FLAGS})
-    endif()
+    # HPy requires specific compile definitions
+    target_compile_definitions(hpy_processor PRIVATE
+        HPY_UNIVERSAL_ABI
+    )
 
     set_target_properties(hpy_processor PROPERTIES
         OUTPUT_NAME "hpy_processor"

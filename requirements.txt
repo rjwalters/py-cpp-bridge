@@ -7,3 +7,8 @@ pybind11==3.0.1
 pytest==9.0.2
 pytest-benchmark==5.2.3
 scikit-build-core==0.10.7
+
+# Optional: For benchmark visualization and profiling
+py-spy>=0.3.14
+matplotlib>=3.5.0
+seaborn>=0.12.0

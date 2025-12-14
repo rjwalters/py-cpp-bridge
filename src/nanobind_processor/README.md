@@ -39,6 +39,34 @@ result3 = processor.process_manual(data)
 | `process_new()` | Allocates fresh array | Flexibility, auto type conversion |
 | `process_manual()` | Explicit copying/casting | Maximum control over memory |
 
+## Performance Profiling
+
+### Benchmark Results
+- **Call Overhead**: 7.36 μs (excellent, modern optimized design)
+- **Processing (10K elements)**: ~14.58 ms (preallocated), ~14.88 ms (new), ~14.77 ms (manual)
+
+### Generate Flamegraph
+```bash
+# Install py-spy if not already installed
+pip install py-spy
+
+# Generate flamegraph for nanobind binding
+python benchmarks/generate_flamegraph.py nanobind
+
+# View the flamegraph
+open benchmarks/flamegraphs/nanobind.svg
+```
+
+### What to Expect in Flamegraphs
+nanobind flamegraphs typically show:
+- **Compact binding overhead** - Optimized C++17 templates, less machinery than pybind11
+- **Efficient dispatch** - Modern design reduces intermediate layers
+- **Native ndarray support** - `nb::ndarray<>` integration
+- **Consistent performance** - All three methods show similar behavior
+- **Small binary footprint** - Reflected in cleaner stack traces
+
+For detailed benchmark analysis and comparisons with other bindings, see [BENCHMARKS.md](/BENCHMARKS.md).
+
 ## How It Works
 
 1. The `NB_MODULE` macro defines the Python module

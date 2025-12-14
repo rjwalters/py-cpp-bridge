@@ -51,6 +51,36 @@ result3 = processor.process_manual(data)        # Manual casting
 | `process_new()` | Allocates fresh array | Flexibility, auto type conversion |
 | `process_manual()` | Explicit copying/casting | Maximum control over memory |
 
+## Performance Profiling
+
+### Benchmark Results
+- **Call Overhead**: 10.89 μs (higher but still microseconds, function pointer indirection)
+- **Processing (10K elements)**: ~13.46 ms (preallocated, best!), ~14.64 ms (new), ~15.59 ms (manual)
+
+### Generate Flamegraph
+```bash
+# Install py-spy if not already installed
+pip install py-spy
+
+# Generate flamegraph for ctypes binding
+python benchmarks/generate_flamegraph.py ctypes
+
+# View the flamegraph
+open benchmarks/flamegraphs/ctypes.svg
+```
+
+### What to Expect in Flamegraphs
+ctypes flamegraphs typically show:
+- **Function pointer indirection** - CDLL dynamic loading and resolution overhead
+- **Python-side wrapper** - Pure Python wrapper class visible in stack
+- **Type marshalling** - `ctypes.data_as()` and pointer conversions
+- **Best preallocated performance** - Efficient buffer reuse (13.46 ms, best overall!)
+- **No compilation overhead** - Direct FFI calls to C functions
+
+**Insight**: Despite higher call overhead, ctypes achieves the best preallocated performance among all bindings, making it ideal for repeated operations.
+
+For detailed benchmark analysis and comparisons with other bindings, see [BENCHMARKS.md](/BENCHMARKS.md).
+
 ## How It Works
 
 1. A C wrapper layer (`c_wrapper.cpp`) provides `extern "C"` functions that wrap the C++ `ArrayProcessor` class

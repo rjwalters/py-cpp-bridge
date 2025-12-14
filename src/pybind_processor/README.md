@@ -43,6 +43,34 @@ result3 = processor.process_manual(data)        # Manual casting
 | `process_new()` | Allocates fresh array | Flexibility, auto type conversion |
 | `process_manual()` | Explicit copying/casting | Maximum control over memory |
 
+## Performance Profiling
+
+### Benchmark Results
+- **Call Overhead**: 6.41 μs (excellent, 2nd lowest)
+- **Processing (10K elements)**: ~14.39 ms (preallocated), ~15.09 ms (new), ~13.45 ms (manual, best!)
+
+### Generate Flamegraph
+```bash
+# Install py-spy if not already installed
+pip install py-spy
+
+# Generate flamegraph for pybind11 binding
+python benchmarks/generate_flamegraph.py pybind11
+
+# View the flamegraph
+open benchmarks/flamegraphs/pybind11.svg
+```
+
+### What to Expect in Flamegraphs
+pybind11 flamegraphs typically show:
+- **Template-based dispatch** - C++ template instantiation overhead visible
+- **Type conversion layers** - Automatic Python↔C++ type conversions
+- **NumPy integration** - `py::array_t<>` handling code
+- **Optimized manual casting** - Best performance for element-wise type conversion
+- **Computation dominance** - Most time still in `cpp_processor::process_array`
+
+For detailed benchmark analysis and comparisons with other bindings, see [BENCHMARKS.md](/BENCHMARKS.md).
+
 ## How It Works
 
 1. The `PYBIND11_MODULE` macro defines the Python module
