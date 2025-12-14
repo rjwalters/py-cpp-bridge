@@ -14,7 +14,7 @@ The core functionality is a simple array processor that doubles each value in an
 |------------|--------|-------------|
 | **Cython** | ✅ Implemented | Python-like syntax, compiles to C |
 | **pybind11** | ✅ Implemented | Header-only C++ library |
-| **nanobind** | 🔲 Planned | Faster pybind11 successor ([#1](https://github.com/rjwalters/py-cpp-bridge/issues/1)) |
+| **nanobind** | ✅ Implemented | Faster pybind11 successor (C++17) |
 | **SWIG** | 🔲 Planned | Multi-language code generator ([#2](https://github.com/rjwalters/py-cpp-bridge/issues/2)) |
 | **ctypes** | 🔲 Planned | Built-in Python FFI ([#3](https://github.com/rjwalters/py-cpp-bridge/issues/3)) |
 | **cffi** | 🔲 Planned | C FFI with PyPy support ([#4](https://github.com/rjwalters/py-cpp-bridge/issues/4)) |
@@ -37,25 +37,33 @@ See [#6](https://github.com/rjwalters/py-cpp-bridge/issues/6) for planned benchm
 ## Requirements
 
 - Python 3.11+
+- CMake 3.18+
 - NumPy 2.x
 - Cython 3.0+
 - pybind11 3.0+
-- A C++ compiler (gcc, clang, MSVC)
+- nanobind 2.0+
+- A C++17 compiler (gcc, clang, MSVC)
 
 ## Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/py-cpp-bridge.git
+git clone https://github.com/rjwalters/py-cpp-bridge.git
 cd py-cpp-bridge
 
-# Build and install the package
+# Create virtual environment (recommended)
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies and build
 make install
 ```
 
+The build uses **CMake** via **scikit-build-core** for modern, cross-platform compilation.
+
 ## Usage
 
-Both Cython and pybind11 implementations provide the same API, so you can easily switch between them.
+All implementations (Cython, pybind11, nanobind) provide the same API, so you can easily switch between them.
 
 ### Basic Example (Cython)
 
@@ -105,6 +113,23 @@ data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
 result1 = processor.process_preallocated(data)  # Pre-allocated buffer
 result2 = processor.process_new(data)           # New contiguous array
 result3 = processor.process_manual(data)        # Manual casting
+```
+
+### Basic Example (nanobind)
+
+```python
+import numpy as np
+from nanobind_processor import PyArrayProcessor
+
+# Identical API to pybind11 - nanobind is its modern successor
+np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
+processor = PyArrayProcessor(5)
+data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
+
+# Same three methods, optimized for smaller binaries and faster compilation
+result1 = processor.process_preallocated(data)
+result2 = processor.process_new(data)
+result3 = processor.process_manual(data)
 ```
 
 ### Type-Annotated Example
@@ -221,35 +246,38 @@ make format
 │   │   └── types.hpp            # Shared type definitions
 │   ├── cython_processor/        # ✅ Implemented
 │   ├── pybind_processor/        # ✅ Implemented
-│   ├── nanobind_processor/      # 🔲 Planned
+│   ├── nanobind_processor/      # ✅ Implemented
 │   ├── swig_processor/          # 🔲 Planned
 │   ├── ctypes_processor/        # 🔲 Planned
 │   ├── cffi_processor/          # 🔲 Planned
 │   └── hpy_processor/           # 🔲 Planned
 ├── tests/                       # Test scripts for each implementation
 ├── benchmarks/                  # Performance comparison (🔲 Planned)
-├── Makefile                     # Build system
-├── setup.py                     # Python package configuration
+├── CMakeLists.txt               # CMake build configuration
+├── pyproject.toml               # Python package configuration (scikit-build-core)
+├── Makefile                     # Convenience commands
 └── README.md                    # This file
 ```
 
 ## How It Works
 
 1. C++ code in the `common` directory defines the core functionality
-2. Type definitions in `types.hpp` are shared between C++ and both Python bindings
-3. Both Cython and pybind11 create Python wrappers around the C++ `ArrayProcessor` class
-4. `setup.py` configures the build process for both extensions with debug/release options
-5. The Makefile provides convenient commands for building and testing both implementations
+2. Type definitions in `types.hpp` are shared between C++ and all Python bindings
+3. CMake builds each binding technology (Cython, pybind11, nanobind) as separate modules
+4. scikit-build-core integrates CMake with Python packaging for `pip install` support
+5. The Makefile provides convenient commands for building and testing all implementations
 
-### Cython vs pybind11
+### Binding Technology Comparison
 
-| Aspect | Cython | pybind11 |
-|--------|--------|----------|
-| Language | Python-like (.pyx) | C++ |
-| Compilation | Python → C → Binary | C++ → Binary |
-| NumPy integration | Via typed memoryviews | Via py::array_t |
-| Type safety | Compile-time via cdef | Template-based |
-| Debug output | Annotated HTML available | Standard C++ debugging |
+| Aspect | Cython | pybind11 | nanobind |
+|--------|--------|----------|----------|
+| Language | Python-like (.pyx) | C++ | C++ |
+| C++ Standard | C++11 | C++11 | C++17 |
+| Compilation | Python → C → Binary | C++ → Binary | C++ → Binary |
+| NumPy integration | Typed memoryviews | py::array_t | nb::ndarray |
+| Binary size | Medium | Large | Small |
+| Compile time | Medium | Slow | Fast |
+| Debug output | Annotated HTML | Standard C++ | Standard C++ |
 
 ## Debugging Features
 

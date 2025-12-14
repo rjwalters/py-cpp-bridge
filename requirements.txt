@@ -1,6 +1,7 @@
 cython==3.2.2
+nanobind==2.10.2
 numpy==2.3.5
 pybind11==3.0.1
 pytest==9.0.2
 pytest-benchmark==5.2.3
-setuptools==80.9.0
+scikit-build-core==0.10.7

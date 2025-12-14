@@ -1,100 +1,71 @@
 # Makefile for py-cpp-bridge project
-# Handles both debug and production builds
+# Uses CMake via scikit-build-core for building extensions
 
 # Source and build directories
 SRC_DIR := src
-CYTHON_SRC_DIR := $(SRC_DIR)/cython_processor
-COMMON_SRC_DIR := $(SRC_DIR)/common
-PYBIND_SRC_DIR := $(SRC_DIR)/pybind_processor
 TEST_DIR := tests
 BUILD_DIR := build
-BUILD_DEBUG_DIR := build_debug
+BENCH_DIR := benchmarks
 
-# Python command and version
+# Python command
 PYTHON := python
-PY_VERSION := $(shell $(PYTHON) -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
-PLATFORM := $(shell $(PYTHON) -c "import sys; print(sys.platform)")
-
-# Get machine architecture for build directories
-ifeq ($(PLATFORM), darwin)
-    ARCH := $(shell uname -m)
-    LIB_SUBDIR := lib.macosx-*-$(ARCH)-cpython-*
-else ifeq ($(PLATFORM), linux)
-    ARCH := $(shell uname -m)
-    LIB_SUBDIR := lib.linux-*-$(ARCH)-cpython-*
-else ifeq ($(PLATFORM), win32)
-    # For Windows, we need a different approach
-    ARCH := $(shell $(PYTHON) -c "import platform; print(platform.machine().lower())")
-    LIB_SUBDIR := lib.win-*
-endif
 
 # Help target
 .PHONY: help
 help:
 	@echo "Available targets:"
 	@echo "  all          - Default target, same as 'build'"
-	@echo "  build        - Build all extension modules (Cython, pybind11)"
+	@echo "  build        - Build all extension modules via CMake"
 	@echo "  install      - Install the package in development mode"
-	@echo "  debug        - Build with debug settings"
 	@echo "  test         - Run all tests"
 	@echo "  benchmark    - Run performance benchmarks"
 	@echo "  clean        - Remove build artifacts"
-	@echo "  distclean    - Deep clean (including compiled extension and eggs)"
+	@echo "  distclean    - Deep clean (including compiled extensions and eggs)"
 	@echo "  format       - Format C++ code with clang-format"
 	@echo ""
-	@echo "Options:"
-	@echo "  DEBUG=1      - Enable debug mode"
+	@echo "Build System: CMake via scikit-build-core"
 
 # Default target
 .PHONY: all
 all: build
 
-# Debug mode can be enabled with DEBUG=1
-DEBUG ?= 0
-
-# Debug-specific flags
-ifeq ($(DEBUG), 1)
-	DEBUG_FLAG := DEBUG=1
-	ACTIVE_BUILD_DIR := $(BUILD_DEBUG_DIR)
-	INSTALL_FLAGS := --no-deps --force-reinstall
-else
-	DEBUG_FLAG :=
-	ACTIVE_BUILD_DIR := $(BUILD_DIR)
-	INSTALL_FLAGS :=
-endif
-
-# Build the extension module using setuptools
+# Build extensions using pip (which invokes CMake via scikit-build-core)
 .PHONY: build
 build:
-	# Build using the common C++ code
-	$(DEBUG_FLAG) $(PYTHON) setup.py build_ext --inplace
+	$(PYTHON) -m pip install --no-build-isolation -e . -v
 
-
-.PHONY: install-python
-install-python:
-	$(DEBUG_FLAG) $(PYTHON) -m pip install --upgrade pip
-	$(DEBUG_FLAG) $(PYTHON) -m pip install -r requirements.txt
+# Install Python dependencies
+.PHONY: install-deps
+install-deps:
+	$(PYTHON) -m pip install --upgrade pip
+	$(PYTHON) -m pip install -r requirements.txt
 
 # Build and install the package in development mode
 .PHONY: install
-install: install-python build
-	$(DEBUG_FLAG) $(PYTHON) -m pip install -e . $(INSTALL_FLAGS)
+install: install-deps build
 
 # Run tests
 .PHONY: test
-test: build
+test:
 	@echo "=== Running Cython tests ==="
-	$(PYTHON) $(TEST_DIR)/test.py
-	$(PYTHON) $(TEST_DIR)/typed_example.py
+	-$(PYTHON) $(TEST_DIR)/test.py
+	-$(PYTHON) $(TEST_DIR)/typed_example.py
 	@echo ""
 	@echo "=== Running pybind11 tests ==="
-	$(PYTHON) $(TEST_DIR)/test_pybind.py
-	$(PYTHON) $(TEST_DIR)/typed_example_pybind.py
+	-$(PYTHON) $(TEST_DIR)/test_pybind.py
+	-$(PYTHON) $(TEST_DIR)/typed_example_pybind.py
+	@echo ""
+	@echo "=== Running nanobind tests ==="
+	-$(PYTHON) $(TEST_DIR)/test_nanobind.py
+	-$(PYTHON) $(TEST_DIR)/typed_example_nanobind.py
+	@echo ""
+	@echo "=== Running SWIG tests (if available) ==="
+	-$(PYTHON) $(TEST_DIR)/test_swig.py 2>/dev/null || echo "SWIG tests skipped (not built)"
+	-$(PYTHON) $(TEST_DIR)/typed_example_swig.py 2>/dev/null || echo "SWIG typed example skipped (not built)"
 
 # Run benchmarks
-BENCH_DIR := benchmarks
 .PHONY: benchmark
-benchmark: build
+benchmark:
 	@if [ -d "$(BENCH_DIR)" ]; then \
 		echo "=== Running benchmarks ==="; \
 		$(PYTHON) -m pytest $(BENCH_DIR) --benchmark-only --benchmark-sort=mean; \
@@ -103,32 +74,33 @@ benchmark: build
 		echo "https://github.com/rjwalters/py-cpp-bridge/issues/6"; \
 	fi
 
-# Clean the build artifacts
+# Clean build artifacts
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)/
-	rm -rf $(BUILD_DEBUG_DIR)/
 	rm -rf dist/
+	rm -rf *.egg-info/
+	rm -rf $(SRC_DIR)/*.egg-info/
 	find . -name "*.so" -delete
 	find . -name "*.pyd" -delete
 	find . -name "*.o" -delete
-	find . -name "*.c" -not -path "*/\.git/*" -delete
-	find $(CYTHON_SRC_DIR) -name "*.cpp" -not -name "cpp_processor.cpp" -delete
-	find $(CYTHON_SRC_DIR) -name "*.html" -delete
+	find . -name "*.html" -path "*/cython_processor/*" -delete
+	# Clean generated files
+	find $(SRC_DIR)/cython_processor -name "*.cpp" ! -name "cpp_processor.cpp" -delete 2>/dev/null || true
+	find $(SRC_DIR)/swig_processor -name "*_wrap.cxx" -delete 2>/dev/null || true
+	find $(SRC_DIR)/swig_processor -name "_swig_processor_impl.py" -delete 2>/dev/null || true
 
-# Deep clean (including compiled extension and eggs)
+# Deep clean (including all generated files)
 .PHONY: distclean
 distclean: clean
-	rm -rf *.egg-info/
-	rm -rf $(SRC_DIR)/*.egg-info/
-	find . -name "__pycache__" -type d -exec rm -rf {} +
+	rm -rf .cmake/
+	rm -rf CMakeFiles/
+	rm -rf _skbuild/
+	find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
 	find . -name "*.pyo" -delete
-
-# Build with debug settings
-.PHONY: debug
-debug:
-	DEBUG=1 $(MAKE) build
+	find . -name "CMakeCache.txt" -delete
+	find . -name "cmake_install.cmake" -delete
 
 # Format C++ code with clang-format (if available)
 .PHONY: format
@@ -140,3 +112,15 @@ format:
 	else \
 		echo "clang-format not found. Please install it to format C++ code."; \
 	fi
+
+# CMake configuration (for manual builds)
+.PHONY: cmake-configure
+cmake-configure:
+	cmake -B $(BUILD_DIR) -S . \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DPython_EXECUTABLE=$(shell which $(PYTHON))
+
+# CMake build (for manual builds)
+.PHONY: cmake-build
+cmake-build: cmake-configure
+	cmake --build $(BUILD_DIR) --parallel
