@@ -10,7 +10,7 @@
 class ArrayProcessor {
 public:
   // Constructor
-  ArrayProcessor(c_value_type size);
+  ArrayProcessor(size_t size);
 
   // Destructor
   ~ArrayProcessor();

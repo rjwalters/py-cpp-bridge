@@ -1,10 +1,10 @@
 # Py-Cpp-Bridge
 
-A demonstration project showcasing efficient Cython-based interoperability between Python and C++, with single source of truth for data types.
+A demonstration project showcasing efficient interoperability between Python and C++ using both **Cython** and **pybind11**, with single source of truth for data types.
 
 ## Overview
 
-This project demonstrates how to integrate high-performance C++ code with Python using Cython. It features three different approaches to memory handling and type conversion, enabling you to choose the right solution for your specific use case.
+This project demonstrates how to integrate high-performance C++ code with Python using two popular binding technologies: **Cython** and **pybind11**. Both implementations feature three different approaches to memory handling and type conversion, enabling you to choose the right solution for your specific use case and compare the two binding approaches.
 
 The core functionality is a simple array processor that doubles each value in an array, but the techniques demonstrated can be applied to any C++ code you want to make available in Python.
 
@@ -22,9 +22,10 @@ The core functionality is a simple array processor that doubles each value in an
 
 ## Requirements
 
-- Python 3.7+
-- NumPy
+- Python 3.11+
+- NumPy 2.x
 - Cython 3.0+
+- pybind11 3.0+
 - A C++ compiler (gcc, clang, MSVC)
 
 ## Installation
@@ -40,7 +41,9 @@ make install
 
 ## Usage
 
-### Basic Example
+Both Cython and pybind11 implementations provide the same API, so you can easily switch between them.
+
+### Basic Example (Cython)
 
 ```python
 import numpy as np
@@ -67,6 +70,27 @@ print(f"Result 2: {result2}")  # Output: [2, 4, 6, 8, 10]
 # Method 3: Manual casting (most control)
 result3 = processor.process_manual(data)
 print(f"Result 3: {result3}")  # Output: [2, 4, 6, 8, 10]
+```
+
+### Basic Example (pybind11)
+
+```python
+import numpy as np
+from pybind_processor import PyArrayProcessor
+
+# Get the correct NumPy type
+np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
+
+# Create an array processor for size 5 arrays
+processor = PyArrayProcessor(5)
+
+# Create some test data using the imported NumPy type
+data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
+
+# Same three methods are available with identical behavior
+result1 = processor.process_preallocated(data)  # Pre-allocated buffer
+result2 = processor.process_new(data)           # New contiguous array
+result3 = processor.process_manual(data)        # Manual casting
 ```
 
 ### Type-Annotated Example
@@ -179,14 +203,20 @@ make format
 ├── src/
 │   ├── common/
 │   │   ├── cpp_processor.cpp    # C++ implementation
-│   │   └── cpp_processor.hpp    # C++ header
+│   │   ├── cpp_processor.hpp    # C++ header
+│   │   └── types.hpp            # Shared type definitions
 │   ├── cython_processor/
 │   │   ├── cython_processor.pxd # Cython declarations
-│   │   └── cython_processor.pyx # Cython implementation
-│   └── pybind_processor/        # pybind11 implementation (future)
+│   │   ├── cython_processor.pyx # Cython implementation
+│   │   └── cython_processor.pyi # Type stubs for IDE support
+│   └── pybind_processor/
+│       ├── pybind_processor.cpp # pybind11 implementation
+│       └── pybind_processor.pyi # Type stubs for IDE support
 ├── tests/
-│   ├── test.py                  # Simple test script
-│   └── typed_example.py         # Example with type annotations
+│   ├── test.py                  # Cython test script
+│   ├── test_pybind.py           # pybind11 test script
+│   ├── typed_example.py         # Cython typed example
+│   └── typed_example_pybind.py  # pybind11 typed example
 ├── Makefile                     # Build system
 ├── setup.py                     # Python package configuration
 └── README.md                    # This file
@@ -195,10 +225,20 @@ make format
 ## How It Works
 
 1. C++ code in the `common` directory defines the core functionality
-2. Type definitions are shared between C++ and Python
-3. Cython creates Python wrappers around the C++ classes
-4. `setup.py` configures the build process with different options for debug/release
-5. The Makefile provides convenient commands for building and testing
+2. Type definitions in `types.hpp` are shared between C++ and both Python bindings
+3. Both Cython and pybind11 create Python wrappers around the C++ `ArrayProcessor` class
+4. `setup.py` configures the build process for both extensions with debug/release options
+5. The Makefile provides convenient commands for building and testing both implementations
+
+### Cython vs pybind11
+
+| Aspect | Cython | pybind11 |
+|--------|--------|----------|
+| Language | Python-like (.pyx) | C++ |
+| Compilation | Python → C → Binary | C++ → Binary |
+| NumPy integration | Via typed memoryviews | Via py::array_t |
+| Type safety | Compile-time via cdef | Template-based |
+| Debug output | Annotated HTML available | Standard C++ debugging |
 
 ## Debugging Features
 

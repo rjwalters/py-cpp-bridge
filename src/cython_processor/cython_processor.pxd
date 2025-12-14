@@ -19,7 +19,7 @@ cdef extern from "../common/types.hpp":
 # Import C++ ArrayProcessor class
 cdef extern from "../common/cpp_processor.hpp":
     cdef cppclass ArrayProcessor:
-        ArrayProcessor(c_value_type size) except +
+        ArrayProcessor(size_t size) except +
         void process_array(c_value_type* data, size_t size) except +
         c_value_type* get_results() const
         size_t get_size() const

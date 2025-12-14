@@ -6,7 +6,7 @@
 
 #include "types.hpp"
 
-ArrayProcessor::ArrayProcessor(c_value_type size) : _size(size) {
+ArrayProcessor::ArrayProcessor(size_t size) : _size(size) {
   // Allocate results array
   _results = new c_value_type[size];
   std::memset(_results, 0, size * sizeof(c_value_type));

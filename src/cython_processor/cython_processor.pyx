@@ -43,11 +43,11 @@ cdef class PyArrayProcessor:
     def __cinit__(self, size_t size):
         """
         Initialize the ArrayProcessor with a specified size.
-        
+
         Args:
             size: The size of arrays this processor will handle
         """
-        self._cpp_processor = new ArrayProcessor(<c_value_type>size)
+        self._cpp_processor = new ArrayProcessor(size)
         # Create a view of the results buffer
         self._results_view = None
     

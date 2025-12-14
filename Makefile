@@ -83,8 +83,13 @@ install: install-python build
 # Run tests
 .PHONY: test
 test: build
+	@echo "=== Running Cython tests ==="
 	$(PYTHON) $(TEST_DIR)/test.py
 	$(PYTHON) $(TEST_DIR)/typed_example.py
+	@echo ""
+	@echo "=== Running pybind11 tests ==="
+	$(PYTHON) $(TEST_DIR)/test_pybind.py
+	$(PYTHON) $(TEST_DIR)/typed_example_pybind.py
 
 # Clean the build artifacts
 .PHONY: clean
