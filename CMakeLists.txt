@@ -151,6 +151,119 @@ else()
 endif()
 
 # =============================================================================
+# ctypes Extension
+# =============================================================================
+message(STATUS "Building ctypes shared library")
+set(CTYPES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/ctypes_processor)
+
+# Build shared library for ctypes
+add_library(ctypes_processor SHARED
+    ${CTYPES_DIR}/c_wrapper.cpp
+    ${COMMON_SOURCES}
+)
+target_include_directories(ctypes_processor PRIVATE ${COMMON_DIR})
+set_target_properties(ctypes_processor PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ctypes_processor
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/ctypes_processor
+    PREFIX ""  # Don't add 'lib' prefix on Unix
+)
+install(TARGETS ctypes_processor
+    LIBRARY DESTINATION ctypes_processor
+    RUNTIME DESTINATION ctypes_processor
+)
+
+# =============================================================================
+# cffi Extension
+# =============================================================================
+# cffi uses its own build system, so we just check if it's available
+# and run the build script if needed
+execute_process(
+    COMMAND ${Python_EXECUTABLE} -c "import cffi"
+    RESULT_VARIABLE CFFI_FOUND
+    OUTPUT_QUIET
+    ERROR_QUIET
+)
+
+if(CFFI_FOUND EQUAL 0)
+    message(STATUS "Building cffi extension")
+    set(CFFI_BUILD_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/build_cffi.py)
+
+    # Run the cffi build script during configure time
+    add_custom_target(cffi_processor ALL
+        COMMAND ${Python_EXECUTABLE} ${CFFI_BUILD_SCRIPT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor
+        COMMENT "Building cffi extension"
+        DEPENDS ${CFFI_BUILD_SCRIPT}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/cffi_wrapper.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/cffi_processor/cffi_wrapper.cpp
+            ${COMMON_SOURCES}
+    )
+else()
+    message(STATUS "cffi not found, skipping cffi_processor")
+endif()
+
+# =============================================================================
+# HPy Extension
+# =============================================================================
+# Check if HPy is available
+execute_process(
+    COMMAND ${Python_EXECUTABLE} -c "import hpy.devel; print(hpy.devel.get_include())"
+    OUTPUT_VARIABLE HPY_INCLUDE_DIR
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    RESULT_VARIABLE HPY_FOUND
+    ERROR_QUIET
+)
+
+if(HPY_FOUND EQUAL 0)
+    message(STATUS "Building HPy extension")
+    set(HPY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/hpy_processor)
+
+    # Get HPy compile flags
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -c "import hpy.devel; print(' '.join(hpy.devel.get_extra_compile_args()))"
+        OUTPUT_VARIABLE HPY_COMPILE_FLAGS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    # Get HPy link flags
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -c "import hpy.devel; print(' '.join(hpy.devel.get_extra_link_args()))"
+        OUTPUT_VARIABLE HPY_LINK_FLAGS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    # Build HPy extension module
+    Python_add_library(hpy_processor MODULE
+        ${HPY_DIR}/hpy_processor.c
+        ${CTYPES_DIR}/c_wrapper.cpp
+        ${COMMON_SOURCES}
+    )
+    target_include_directories(hpy_processor PRIVATE
+        ${HPY_INCLUDE_DIR}
+        ${COMMON_DIR}
+        ${CTYPES_DIR}
+    )
+
+    # Apply HPy compile and link flags
+    if(HPY_COMPILE_FLAGS)
+        target_compile_options(hpy_processor PRIVATE ${HPY_COMPILE_FLAGS})
+    endif()
+    if(HPY_LINK_FLAGS)
+        target_link_options(hpy_processor PRIVATE ${HPY_LINK_FLAGS})
+    endif()
+
+    set_target_properties(hpy_processor PROPERTIES
+        OUTPUT_NAME "hpy_processor"
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/hpy_processor
+    )
+    install(TARGETS hpy_processor LIBRARY DESTINATION hpy_processor)
+else()
+    message(STATUS "HPy not found, skipping hpy_processor")
+endif()
+
+# =============================================================================
 # Summary
 # =============================================================================
 message(STATUS "")
@@ -161,4 +274,15 @@ message(STATUS "  pybind11: ${pybind11_FOUND}")
 message(STATUS "  nanobind: ${nanobind_FOUND}")
 message(STATUS "  Cython: enabled (via python -m cython)")
 message(STATUS "  SWIG: ${SWIG_FOUND}")
+message(STATUS "  ctypes: enabled")
+if(CFFI_FOUND EQUAL 0)
+    message(STATUS "  cffi: enabled")
+else()
+    message(STATUS "  cffi: not found")
+endif()
+if(HPY_FOUND EQUAL 0)
+    message(STATUS "  HPy: enabled")
+else()
+    message(STATUS "  HPy: not found")
+endif()
 message(STATUS "")

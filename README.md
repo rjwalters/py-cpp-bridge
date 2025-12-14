@@ -16,9 +16,9 @@ The core functionality is a simple array processor that doubles each value in an
 | **pybind11** | ✅ Implemented | Header-only C++ library |
 | **nanobind** | ✅ Implemented | Faster pybind11 successor (C++17) |
 | **SWIG** | ✅ Implemented | Multi-language code generator |
-| **ctypes** | 🔲 Planned | Built-in Python FFI ([#3](https://github.com/rjwalters/py-cpp-bridge/issues/3)) |
-| **cffi** | 🔲 Planned | C FFI with PyPy support ([#4](https://github.com/rjwalters/py-cpp-bridge/issues/4)) |
-| **HPy** | 🔲 Planned | Universal Python API ([#5](https://github.com/rjwalters/py-cpp-bridge/issues/5)) |
+| **ctypes** | ✅ Implemented | Built-in Python FFI ([#3](https://github.com/rjwalters/py-cpp-bridge/issues/3)) |
+| **cffi** | ✅ Implemented | C FFI with PyPy support |
+| **HPy** | ✅ Implemented | Universal Python API ([#5](https://github.com/rjwalters/py-cpp-bridge/issues/5)) |
 
 See [Benchmarks](#benchmarks) below for performance comparison ([#6](https://github.com/rjwalters/py-cpp-bridge/issues/6)).
 
@@ -63,7 +63,7 @@ The build uses **CMake** via **scikit-build-core** for modern, cross-platform co
 
 ## Usage
 
-All implementations (Cython, pybind11, nanobind, SWIG) provide the same API, so you can easily switch between them.
+All implementations (Cython, pybind11, nanobind, SWIG, ctypes, cffi, HPy) provide the same API, so you can easily switch between them.
 
 For detailed usage examples and implementation-specific information, see:
 
@@ -71,6 +71,9 @@ For detailed usage examples and implementation-specific information, see:
 - [pybind11 implementation](src/pybind_processor/README.md) - Header-only C++ library
 - [nanobind implementation](src/nanobind_processor/README.md) - Modern pybind11 successor
 - [SWIG implementation](src/swig_processor/README.md) - Multi-language code generator
+- [ctypes implementation](src/ctypes_processor/README.md) - Built-in Python FFI
+- [cffi implementation](src/cffi_processor/README.md) - C FFI with excellent PyPy support
+- [HPy implementation](src/hpy_processor/README.md) - Universal Python API for portability
 
 ### Type-Annotated Example
 
@@ -188,9 +191,9 @@ make format
 │   ├── pybind_processor/        # ✅ Implemented
 │   ├── nanobind_processor/      # ✅ Implemented
 │   ├── swig_processor/          # ✅ Implemented
-│   ├── ctypes_processor/        # 🔲 Planned
-│   ├── cffi_processor/          # 🔲 Planned
-│   └── hpy_processor/           # 🔲 Planned
+│   ├── ctypes_processor/        # ✅ Implemented
+│   ├── cffi_processor/          # ✅ Implemented
+│   └── hpy_processor/           # ✅ Implemented
 ├── tests/                       # Test scripts for each implementation
 ├── benchmarks/                  # Performance comparison (pytest-benchmark)
 ├── CMakeLists.txt               # CMake build configuration
@@ -242,9 +245,9 @@ Performance comparison of all binding implementations using `pytest-benchmark`. 
 | **pybind11** | 12.69 ms | 12.64 ms | 12.92 ms | 5.54 μs |
 | **nanobind** | 12.86 ms | 12.80 ms | 12.79 ms | 5.76 μs |
 | **SWIG** | 12.88 ms | 12.70 ms | 15.05 ms | 5.81 μs |
-| **ctypes** | — | — | — | — |
-| **cffi** | — | — | — | — |
-| **HPy** | — | — | — | — |
+| **ctypes** | TBD | TBD | TBD | TBD |
+| **cffi** | TBD | TBD | TBD | TBD |
+| **HPy** | TBD | TBD | TBD | TBD |
 
 *Measured on Apple M3 Pro, Python 3.14, macOS 15.3*
 

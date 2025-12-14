@@ -5,13 +5,15 @@ requires = [
     "pybind11>=3.0.0",
     "nanobind>=2.0.0",
     "numpy>=2.0.0",
+    "cffi>=1.15.0",
+    "hpy>=0.9.0",
 ]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "py-cpp-bridge"
 version = "0.1.0"
-description = "Python/C++ bridging examples using various technologies (Cython, pybind11, nanobind, SWIG)"
+description = "Python/C++ bridging examples using various technologies (Cython, pybind11, nanobind, SWIG, ctypes, cffi, HPy)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -33,6 +35,10 @@ wheel.packages = [
     "src/cython_processor",
     "src/pybind_processor",
     "src/nanobind_processor",
+    "src/swig_processor",
+    "src/ctypes_processor",
+    "src/cffi_processor",
+    "src/hpy_processor",
 ]
 wheel.install-dir = "."
 build-dir = "build/{wheel_tag}"

@@ -1,4 +1,6 @@
+cffi>=1.15.0
 cython==3.2.2
+hpy>=0.9.0
 nanobind==2.10.2
 numpy==2.3.5
 pybind11==3.0.1
