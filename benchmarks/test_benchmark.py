@@ -46,6 +46,20 @@ try:
 except ImportError:
     pass
 
+try:
+    from ctypes_processor import PyArrayProcessor as CtypesProcessor
+
+    BRIDGES.append(("ctypes", CtypesProcessor))
+except ImportError:
+    pass
+
+try:
+    from cffi_processor import PyArrayProcessor as CffiProcessor
+
+    BRIDGES.append(("cffi", CffiProcessor))
+except ImportError:
+    pass
+
 
 def get_numpy_type():
     """Get the numpy dtype from any available bridge."""

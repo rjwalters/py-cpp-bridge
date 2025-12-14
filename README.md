@@ -206,21 +206,22 @@ make format
 
 1. C++ code in the `common` directory defines the core functionality
 2. Type definitions in `types.hpp` are shared between C++ and all Python bindings
-3. CMake builds each binding technology (Cython, pybind11, nanobind) as separate modules
-4. scikit-build-core integrates CMake with Python packaging for `pip install` support
-5. The Makefile provides convenient commands for building and testing all implementations
+3. CMake builds most binding technologies (Cython, pybind11, nanobind, SWIG, ctypes, HPy) as separate modules
+4. cffi uses its own build system via a Python script that compiles C wrapper code
+5. scikit-build-core integrates CMake with Python packaging for `pip install` support
+6. The Makefile provides convenient commands for building and testing all implementations
 
 ### Binding Technology Comparison
 
-| Aspect | Cython | pybind11 | nanobind |
-|--------|--------|----------|----------|
-| Language | Python-like (.pyx) | C++ | C++ |
-| C++ Standard | C++11 | C++11 | C++17 |
-| Compilation | Python → C → Binary | C++ → Binary | C++ → Binary |
-| NumPy integration | Typed memoryviews | py::array_t | nb::ndarray |
-| Binary size | Medium | Large | Small |
-| Compile time | Medium | Slow | Fast |
-| Debug output | Annotated HTML | Standard C++ | Standard C++ |
+| Aspect | Cython | pybind11 | nanobind | SWIG | ctypes | cffi | HPy |
+|--------|--------|----------|----------|------|--------|------|-----|
+| **Language** | Python-like | C++ | C++ | Interface | Pure Python | C decl. | C |
+| **C++ Standard** | C++11 | C++11 | C++17 | Any | Any | Any | Any |
+| **Compilation** | Py→C→Binary | C++→Binary | C++→Binary | Code gen | C/C++ only | Optional | C→Binary |
+| **NumPy** | Memoryviews | py::array_t | nb::ndarray | Manual | ctypes | Manual | Manual |
+| **Binary size** | Medium | Large | Small | Medium | N/A | Small | Small |
+| **Compile time** | Medium | Slow | Fast | Medium | None | Fast | Medium |
+| **PyPy support** | Limited | None | None | Limited | Good | Excellent | Excellent |
 
 ## Debugging Features
 
