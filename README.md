@@ -15,12 +15,12 @@ The core functionality is a simple array processor that doubles each value in an
 | **Cython** | ✅ Implemented | Python-like syntax, compiles to C |
 | **pybind11** | ✅ Implemented | Header-only C++ library |
 | **nanobind** | ✅ Implemented | Faster pybind11 successor (C++17) |
-| **SWIG** | 🔲 Planned | Multi-language code generator ([#2](https://github.com/rjwalters/py-cpp-bridge/issues/2)) |
+| **SWIG** | ✅ Implemented | Multi-language code generator |
 | **ctypes** | 🔲 Planned | Built-in Python FFI ([#3](https://github.com/rjwalters/py-cpp-bridge/issues/3)) |
 | **cffi** | 🔲 Planned | C FFI with PyPy support ([#4](https://github.com/rjwalters/py-cpp-bridge/issues/4)) |
 | **HPy** | 🔲 Planned | Universal Python API ([#5](https://github.com/rjwalters/py-cpp-bridge/issues/5)) |
 
-See [#6](https://github.com/rjwalters/py-cpp-bridge/issues/6) for planned benchmarking comparing all implementations.
+See [Benchmarks](#benchmarks) below for performance comparison ([#6](https://github.com/rjwalters/py-cpp-bridge/issues/6)).
 
 ## Features
 
@@ -63,74 +63,14 @@ The build uses **CMake** via **scikit-build-core** for modern, cross-platform co
 
 ## Usage
 
-All implementations (Cython, pybind11, nanobind) provide the same API, so you can easily switch between them.
+All implementations (Cython, pybind11, nanobind, SWIG) provide the same API, so you can easily switch between them.
 
-### Basic Example (Cython)
+For detailed usage examples and implementation-specific information, see:
 
-```python
-import numpy as np
-from cython_processor import PyArrayProcessor
-
-# Get the correct NumPy type
-np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
-
-# Create an array processor for size 5 arrays
-processor = PyArrayProcessor(5)
-
-# Create some test data using the imported NumPy type
-# This ensures type consistency with C++ expectations
-data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
-
-# Method 1: Using pre-allocated buffer (most efficient)
-result1 = processor.process_preallocated(data)
-print(f"Result 1: {result1}")  # Output: [2, 4, 6, 8, 10]
-
-# Method 2: Creating new contiguous array (most flexible)
-result2 = processor.process_new(data)
-print(f"Result 2: {result2}")  # Output: [2, 4, 6, 8, 10]
-
-# Method 3: Manual casting (most control)
-result3 = processor.process_manual(data)
-print(f"Result 3: {result3}")  # Output: [2, 4, 6, 8, 10]
-```
-
-### Basic Example (pybind11)
-
-```python
-import numpy as np
-from pybind_processor import PyArrayProcessor
-
-# Get the correct NumPy type
-np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
-
-# Create an array processor for size 5 arrays
-processor = PyArrayProcessor(5)
-
-# Create some test data using the imported NumPy type
-data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
-
-# Same three methods are available with identical behavior
-result1 = processor.process_preallocated(data)  # Pre-allocated buffer
-result2 = processor.process_new(data)           # New contiguous array
-result3 = processor.process_manual(data)        # Manual casting
-```
-
-### Basic Example (nanobind)
-
-```python
-import numpy as np
-from nanobind_processor import PyArrayProcessor
-
-# Identical API to pybind11 - nanobind is its modern successor
-np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
-processor = PyArrayProcessor(5)
-data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
-
-# Same three methods, optimized for smaller binaries and faster compilation
-result1 = processor.process_preallocated(data)
-result2 = processor.process_new(data)
-result3 = processor.process_manual(data)
-```
+- [Cython implementation](src/cython_processor/README.md) - Python-like syntax with typed memoryviews
+- [pybind11 implementation](src/pybind_processor/README.md) - Header-only C++ library
+- [nanobind implementation](src/nanobind_processor/README.md) - Modern pybind11 successor
+- [SWIG implementation](src/swig_processor/README.md) - Multi-language code generator
 
 ### Type-Annotated Example
 
@@ -247,12 +187,12 @@ make format
 │   ├── cython_processor/        # ✅ Implemented
 │   ├── pybind_processor/        # ✅ Implemented
 │   ├── nanobind_processor/      # ✅ Implemented
-│   ├── swig_processor/          # 🔲 Planned
+│   ├── swig_processor/          # ✅ Implemented
 │   ├── ctypes_processor/        # 🔲 Planned
 │   ├── cffi_processor/          # 🔲 Planned
 │   └── hpy_processor/           # 🔲 Planned
 ├── tests/                       # Test scripts for each implementation
-├── benchmarks/                  # Performance comparison (🔲 Planned)
+├── benchmarks/                  # Performance comparison (pytest-benchmark)
 ├── CMakeLists.txt               # CMake build configuration
 ├── pyproject.toml               # Python package configuration (scikit-build-core)
 ├── Makefile                     # Convenience commands
@@ -289,6 +229,47 @@ When built in debug mode (`make debug`), the following features are enabled:
 - Line tracing for coverage tools
 - Profiling support
 - Annotated HTML output showing the Cython to C conversion
+
+## Benchmarks
+
+Performance comparison of all binding implementations using `pytest-benchmark`. Results show mean execution time for processing 10,000 element arrays (lower is better).
+
+### Results Summary
+
+| Technology | Preallocated | New Array | Manual Cast | Call Overhead |
+|------------|--------------|-----------|-------------|---------------|
+| **Cython** | 12.97 ms | 12.57 ms | 12.98 ms | 5.20 μs |
+| **pybind11** | 12.69 ms | 12.64 ms | 12.92 ms | 5.54 μs |
+| **nanobind** | 12.86 ms | 12.80 ms | 12.79 ms | 5.76 μs |
+| **SWIG** | 12.88 ms | 12.70 ms | 15.05 ms | 5.81 μs |
+| **ctypes** | — | — | — | — |
+| **cffi** | — | — | — | — |
+| **HPy** | — | — | — | — |
+
+*Measured on Apple M3 Pro, Python 3.14, macOS 15.3*
+
+### Key Observations
+
+- **Processing time**: All implementations perform similarly (~12.6-13.0 ms) since the actual work is done in C++
+- **Call overhead**: Cython has the lowest call overhead (~5.2 μs), followed closely by pybind11 (~5.5 μs)
+- **SWIG manual casting**: ~16% slower due to Python-layer type conversion in the wrapper
+- **Differences are minimal**: For array processing, the binding choice matters less than the algorithm
+
+### Running Benchmarks
+
+```bash
+# Run all benchmarks
+make benchmark
+
+# Quick call overhead test
+make benchmark-quick
+
+# Compare bridges at 10K elements
+make benchmark-compare
+
+# Save results to JSON
+make benchmark-save
+```
 
 ## License
 

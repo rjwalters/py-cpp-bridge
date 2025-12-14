@@ -15,17 +15,25 @@ Python-to-C++ binding implementation using [SWIG](http://www.swig.org/) (Simplif
 
 SWIG uses a declarative interface file (`.i`) to generate wrapper code. Unlike other approaches, SWIG can generate bindings for multiple languages from a single interface definition.
 
-## API
+## Basic Example
 
 ```python
+import numpy as np
 from swig_processor import PyArrayProcessor
 
-processor = PyArrayProcessor(size=1000)
+# Get the correct NumPy type
+np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
 
-# Three processing methods:
-result = processor.process_preallocated(input_array)  # Reuses buffer
-result = processor.process_new(input_array)           # Creates new array
-result = processor.process_manual(input_array)        # Manual copying
+# Create an array processor for size 5 arrays
+processor = PyArrayProcessor(5)
+
+# Create some test data using the imported NumPy type
+data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
+
+# Same three methods are available with identical behavior
+result1 = processor.process_preallocated(data)  # Pre-allocated buffer
+result2 = processor.process_new(data)           # New contiguous array
+result3 = processor.process_manual(data)        # Manual casting
 ```
 
 ## Processing Methods

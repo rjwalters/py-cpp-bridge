@@ -14,14 +14,17 @@ PYTHON := python
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  all          - Default target, same as 'build'"
-	@echo "  build        - Build all extension modules via CMake"
-	@echo "  install      - Install the package in development mode"
-	@echo "  test         - Run all tests"
-	@echo "  benchmark    - Run performance benchmarks"
-	@echo "  clean        - Remove build artifacts"
-	@echo "  distclean    - Deep clean (including compiled extensions and eggs)"
-	@echo "  format       - Format C++ code with clang-format"
+	@echo "  all              - Default target, same as 'build'"
+	@echo "  build            - Build all extension modules via CMake"
+	@echo "  install          - Install the package in development mode"
+	@echo "  test             - Run all tests"
+	@echo "  benchmark        - Run all performance benchmarks"
+	@echo "  benchmark-quick  - Run quick overhead benchmarks only"
+	@echo "  benchmark-save   - Run benchmarks and save results to JSON"
+	@echo "  benchmark-compare- Compare bridges at 1000 elements"
+	@echo "  clean            - Remove build artifacts"
+	@echo "  distclean        - Deep clean (including compiled extensions and eggs)"
+	@echo "  format           - Format C++ code with clang-format"
 	@echo ""
 	@echo "Build System: CMake via scikit-build-core"
 
@@ -66,13 +69,29 @@ test:
 # Run benchmarks
 .PHONY: benchmark
 benchmark:
-	@if [ -d "$(BENCH_DIR)" ]; then \
-		echo "=== Running benchmarks ==="; \
-		$(PYTHON) -m pytest $(BENCH_DIR) --benchmark-only --benchmark-sort=mean; \
-	else \
-		echo "Benchmarks not yet implemented. See issue #6."; \
-		echo "https://github.com/rjwalters/py-cpp-bridge/issues/6"; \
-	fi
+	@echo "=== Running benchmarks ==="
+	$(PYTHON) -m pytest $(BENCH_DIR) --benchmark-only --benchmark-group-by=func --benchmark-sort=mean
+
+# Run quick benchmarks (smaller array sizes, fewer iterations)
+.PHONY: benchmark-quick
+benchmark-quick:
+	@echo "=== Running quick benchmarks ==="
+	$(PYTHON) -m pytest $(BENCH_DIR)/test_benchmark.py::TestCallOverhead -v --benchmark-only --benchmark-sort=mean
+
+# Run benchmarks and save results to JSON
+.PHONY: benchmark-save
+benchmark-save:
+	@echo "=== Running benchmarks (saving results) ==="
+	$(PYTHON) -m pytest $(BENCH_DIR) --benchmark-only --benchmark-sort=mean \
+		--benchmark-json=$(BENCH_DIR)/results.json
+	@echo "Results saved to $(BENCH_DIR)/results.json"
+
+# Run benchmarks comparing just the bridges (10000 element arrays)
+.PHONY: benchmark-compare
+benchmark-compare:
+	@echo "=== Comparing bridges (10000 elements) ==="
+	$(PYTHON) -m pytest $(BENCH_DIR)/test_benchmark.py -k "n10000]" -v --benchmark-only \
+		--benchmark-columns=mean,stddev,rounds --benchmark-sort=mean
 
 # Clean build artifacts
 .PHONY: clean

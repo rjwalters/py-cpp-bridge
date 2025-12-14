@@ -4,3 +4,6 @@
 build
 cython_processor.cpp
 **/__pycache__
+
+# Benchmark results
+benchmarks/results.json

@@ -14,17 +14,21 @@ Python-to-C++ binding implementation using [nanobind](https://nanobind.readthedo
 
 nanobind is the modern successor to pybind11, designed for C++17 and newer. It offers faster compilation, smaller binary sizes, and lower runtime overhead compared to pybind11.
 
-## API
+## Basic Example
 
 ```python
+import numpy as np
 from nanobind_processor import PyArrayProcessor
 
-processor = PyArrayProcessor(size=1000)
+# Identical API to pybind11 - nanobind is its modern successor
+np_values_type = np.dtype(PyArrayProcessor.get_numpy_type_name("value"))
+processor = PyArrayProcessor(5)
+data = np.array([1, 2, 3, 4, 5], dtype=np_values_type)
 
-# Three processing methods:
-result = processor.process_preallocated(input_array)  # Reuses buffer
-result = processor.process_new(input_array)           # Creates new array
-result = processor.process_manual(input_array)        # Manual copying
+# Same three methods, optimized for smaller binaries and faster compilation
+result1 = processor.process_preallocated(data)
+result2 = processor.process_new(data)
+result3 = processor.process_manual(data)
 ```
 
 ## Processing Methods
