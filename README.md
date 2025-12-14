@@ -1,12 +1,26 @@
 # Py-Cpp-Bridge
 
-A demonstration project showcasing efficient interoperability between Python and C++ using both **Cython** and **pybind11**, with single source of truth for data types.
+A comprehensive comparison of Python/C++ binding technologies, demonstrating multiple approaches to high-performance interoperability with a single source of truth for data types.
 
 ## Overview
 
-This project demonstrates how to integrate high-performance C++ code with Python using two popular binding technologies: **Cython** and **pybind11**. Both implementations feature three different approaches to memory handling and type conversion, enabling you to choose the right solution for your specific use case and compare the two binding approaches.
+This project demonstrates how to integrate high-performance C++ code with Python using multiple binding technologies. Each implementation features three different approaches to memory handling and type conversion, enabling you to compare binding approaches and choose the right solution for your specific use case.
 
 The core functionality is a simple array processor that doubles each value in an array, but the techniques demonstrated can be applied to any C++ code you want to make available in Python.
+
+## Binding Technologies
+
+| Technology | Status | Description |
+|------------|--------|-------------|
+| **Cython** | ✅ Implemented | Python-like syntax, compiles to C |
+| **pybind11** | ✅ Implemented | Header-only C++ library |
+| **nanobind** | 🔲 Planned | Faster pybind11 successor ([#1](https://github.com/rjwalters/py-cpp-bridge/issues/1)) |
+| **SWIG** | 🔲 Planned | Multi-language code generator ([#2](https://github.com/rjwalters/py-cpp-bridge/issues/2)) |
+| **ctypes** | 🔲 Planned | Built-in Python FFI ([#3](https://github.com/rjwalters/py-cpp-bridge/issues/3)) |
+| **cffi** | 🔲 Planned | C FFI with PyPy support ([#4](https://github.com/rjwalters/py-cpp-bridge/issues/4)) |
+| **HPy** | 🔲 Planned | Universal Python API ([#5](https://github.com/rjwalters/py-cpp-bridge/issues/5)) |
+
+See [#6](https://github.com/rjwalters/py-cpp-bridge/issues/6) for planned benchmarking comparing all implementations.
 
 ## Features
 
@@ -205,18 +219,15 @@ make format
 │   │   ├── cpp_processor.cpp    # C++ implementation
 │   │   ├── cpp_processor.hpp    # C++ header
 │   │   └── types.hpp            # Shared type definitions
-│   ├── cython_processor/
-│   │   ├── cython_processor.pxd # Cython declarations
-│   │   ├── cython_processor.pyx # Cython implementation
-│   │   └── cython_processor.pyi # Type stubs for IDE support
-│   └── pybind_processor/
-│       ├── pybind_processor.cpp # pybind11 implementation
-│       └── pybind_processor.pyi # Type stubs for IDE support
-├── tests/
-│   ├── test.py                  # Cython test script
-│   ├── test_pybind.py           # pybind11 test script
-│   ├── typed_example.py         # Cython typed example
-│   └── typed_example_pybind.py  # pybind11 typed example
+│   ├── cython_processor/        # ✅ Implemented
+│   ├── pybind_processor/        # ✅ Implemented
+│   ├── nanobind_processor/      # 🔲 Planned
+│   ├── swig_processor/          # 🔲 Planned
+│   ├── ctypes_processor/        # 🔲 Planned
+│   ├── cffi_processor/          # 🔲 Planned
+│   └── hpy_processor/           # 🔲 Planned
+├── tests/                       # Test scripts for each implementation
+├── benchmarks/                  # Performance comparison (🔲 Planned)
 ├── Makefile                     # Build system
 ├── setup.py                     # Python package configuration
 └── README.md                    # This file

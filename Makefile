@@ -33,11 +33,11 @@ endif
 help:
 	@echo "Available targets:"
 	@echo "  all          - Default target, same as 'build'"
-	@echo "  build        - Build the Cython extension"
+	@echo "  build        - Build all extension modules (Cython, pybind11)"
 	@echo "  install      - Install the package in development mode"
 	@echo "  debug        - Build with debug settings"
-	@echo "  test         - Run the test script"
-	@echo "  typed-example - Run the typed example script"
+	@echo "  test         - Run all tests"
+	@echo "  benchmark    - Run performance benchmarks"
 	@echo "  clean        - Remove build artifacts"
 	@echo "  distclean    - Deep clean (including compiled extension and eggs)"
 	@echo "  format       - Format C++ code with clang-format"
@@ -90,6 +90,18 @@ test: build
 	@echo "=== Running pybind11 tests ==="
 	$(PYTHON) $(TEST_DIR)/test_pybind.py
 	$(PYTHON) $(TEST_DIR)/typed_example_pybind.py
+
+# Run benchmarks
+BENCH_DIR := benchmarks
+.PHONY: benchmark
+benchmark: build
+	@if [ -d "$(BENCH_DIR)" ]; then \
+		echo "=== Running benchmarks ==="; \
+		$(PYTHON) -m pytest $(BENCH_DIR) --benchmark-only --benchmark-sort=mean; \
+	else \
+		echo "Benchmarks not yet implemented. See issue #6."; \
+		echo "https://github.com/rjwalters/py-cpp-bridge/issues/6"; \
+	fi
 
 # Clean the build artifacts
 .PHONY: clean
