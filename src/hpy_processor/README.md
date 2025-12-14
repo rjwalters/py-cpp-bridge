@@ -1,49 +1,22 @@
 # HPy Processor
 
-HPy-based Python/C++ bridge implementation demonstrating the three memory handling patterns.
+Python-to-C++ binding implementation using [HPy](https://hpyproject.org/) (Universal Python API).
 
-## About HPy
+## Files
 
-[HPy](https://hpyproject.org/) is a new universal API for Python extensions designed to:
+| File | Description |
+|------|-------------|
+| `hpy_processor.c` | HPy extension implementation in C |
+| `hpy_processor.pyi` | Python stub file for type hints |
+| `__init__.py` | Package initializer |
 
-- Work across multiple Python implementations (CPython, PyPy, GraalPy)
-- Enable better optimization by alternative implementations
-- Provide a cleaner, more maintainable API than the traditional C API
-- Support both the CPython ABI and a universal HPy ABI
+## Overview
 
-## Implementation Overview
+HPy is a new universal API for Python extensions designed to work across multiple Python implementations (CPython, PyPy, GraalPy). It provides a cleaner, more maintainable API than the traditional C API while enabling better optimization by alternative implementations.
 
-This implementation uses HPy's C-based API to wrap the C++ `ArrayProcessor` class through a C wrapper layer (reusing the same C wrapper as the ctypes implementation).
+This implementation uses HPy's C-based API to wrap the C++ `ArrayProcessor` class. It supports both the CPython ABI mode and a universal HPy ABI mode for maximum portability.
 
-### Key Features
-
-- **Universal ABI**: Can run in either CPython ABI mode or HPy universal mode
-- **Cross-implementation**: Works on CPython, PyPy, and GraalPy
-- **Zero-copy operations**: Direct memory access to NumPy arrays
-- **Three memory patterns**: Demonstrates pre-allocated, new array, and manual conversion approaches
-
-### File Structure
-
-```
-src/hpy_processor/
-├── hpy_processor.c          # HPy extension implementation
-├── __init__.py              # Python module interface
-├── hpy_processor.pyi        # Type stubs for IDE support
-└── README.md                # This file
-```
-
-### Dependencies
-
-- HPy (https://github.com/hpyproject/hpy)
-- NumPy
-- C compiler
-- C++ compiler (for the common C++ implementation)
-
-### Build System
-
-The HPy extension is built using HPy's build utilities integrated with scikit-build-core.
-
-## Usage Example
+## Basic Example
 
 ```python
 from hpy_processor import PyArrayProcessor
@@ -72,46 +45,30 @@ print(result3)  # [2. 4. 6. 8. 10.]
 processor.close()
 ```
 
-## Memory Handling Patterns
+## Processing Methods
 
-### 1. Pre-allocated Buffer (`process_preallocated`)
+| Method | Memory Strategy | Best For |
+|--------|-----------------|----------|
+| `process_preallocated()` | Reuses internal buffer | Repeated calls with same-sized arrays |
+| `process_new()` | Allocates fresh array | Flexibility, auto type conversion |
+| `process_manual()` | Explicit copying/casting | Maximum control over memory |
 
-```python
-result = processor.process_preallocated(data)
-```
+## How It Works
 
-- Maintains internal results buffer
-- Reuses buffer across calls
-- Most efficient for repeated operations
-- Buffer tied to processor lifetime
+1. The `HPy_MODINIT` macro defines the Python module using HPy's universal API
+2. C wrapper functions interface with the C++ `ArrayProcessor` class
+3. `HPyType_Spec` defines the Python class with modern type specification
+4. NumPy arrays are accessed via `__array_interface__` for zero-copy operations
+5. HPy handles manage Python object references automatically
 
-### 2. New Contiguous Array (`process_new`)
+## Advantages
 
-```python
-result = processor.process_new(data)
-```
-
-- Converts input to correct dtype automatically
-- Creates new results array each call
-- Flexible input handling (arrays, lists, tuples)
-- Independent results
-
-### 3. Manual Casting (`process_manual`)
-
-```python
-result = processor.process_manual(data)
-```
-
-- Manual element-by-element conversion
-- Maximum control over type conversion
-- Handles any numeric input type
-- Most flexible but more overhead
-
-## Performance Notes
-
-- **HPy Universal Mode**: May have slight overhead vs. CPython C API, but enables portability
-- **PyPy/GraalPy**: HPy can enable better JIT optimizations on alternative implementations
-- **Memory Access**: Uses NumPy's `__array_interface__` for direct memory access
+- **Universal ABI**: Works across CPython, PyPy, and GraalPy without recompilation
+- **Future-proof**: Designed for long-term compatibility as Python evolves
+- **Better optimization**: Alternative implementations can optimize HPy code more effectively
+- **Cleaner API**: More maintainable than the traditional C API
+- **PyPy performance**: Enables better JIT optimization on PyPy and GraalPy
+- **Explicit memory management**: HPy handles prevent reference counting errors
 
 ## HPy-Specific Features
 
@@ -121,6 +78,7 @@ This implementation showcases several HPy features:
 2. **HPy handles**: Automatic reference counting via HPy context
 3. **Universal module init**: `HPy_MODINIT` macro for cross-platform support
 4. **Type specification**: Modern `HPyType_Spec` API instead of legacy `PyTypeObject`
+5. **Zero-copy NumPy**: Direct memory access via `__array_interface__`
 
 ## Comparison with Other Bindings
 
