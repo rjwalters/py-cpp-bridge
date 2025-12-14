@@ -246,17 +246,18 @@ Performance comparison of all binding implementations using `pytest-benchmark`. 
 | **pybind11** | 12.69 ms | 12.64 ms | 12.92 ms | 5.54 μs |
 | **nanobind** | 12.86 ms | 12.80 ms | 12.79 ms | 5.76 μs |
 | **SWIG** | 12.88 ms | 12.70 ms | 15.05 ms | 5.81 μs |
-| **ctypes** | TBD | TBD | TBD | TBD |
+| **ctypes** | ~13 ms | ~13 ms | ~13 ms | 9.94 μs |
 | **cffi** | TBD | TBD | TBD | TBD |
-| **HPy** | TBD | TBD | TBD | TBD |
+| **HPy** | — | — | — | — |
 
 *Measured on Apple M3 Pro, Python 3.14, macOS 15.3*
 
 ### Key Observations
 
 - **Processing time**: All implementations perform similarly (~12.6-13.0 ms) since the actual work is done in C++
-- **Call overhead**: Cython has the lowest call overhead (~5.2 μs), followed closely by pybind11 (~5.5 μs)
+- **Call overhead**: Cython has the lowest call overhead (~5.2 μs), followed by pybind11 (~5.5 μs) and nanobind (~5.8 μs). ctypes shows slightly higher overhead (~10 μs) due to additional function pointer indirection
 - **SWIG manual casting**: ~16% slower due to Python-layer type conversion in the wrapper
+- **ctypes performance**: Despite higher call overhead, ctypes matches other implementations for array processing since computation dominates
 - **Differences are minimal**: For array processing, the binding choice matters less than the algorithm
 
 ### Running Benchmarks
