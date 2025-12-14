@@ -65,6 +65,14 @@ test:
 	@echo "=== Running SWIG tests (if available) ==="
 	-$(PYTHON) $(TEST_DIR)/test_swig.py 2>/dev/null || echo "SWIG tests skipped (not built)"
 	-$(PYTHON) $(TEST_DIR)/typed_example_swig.py 2>/dev/null || echo "SWIG typed example skipped (not built)"
+	@echo ""
+	@echo "=== Running ctypes tests ==="
+	-$(PYTHON) $(TEST_DIR)/test_ctypes.py
+	-$(PYTHON) $(TEST_DIR)/typed_example_ctypes.py
+	@echo ""
+	@echo "=== Running cffi tests ==="
+	-$(PYTHON) $(TEST_DIR)/test_cffi.py
+	-$(PYTHON) $(TEST_DIR)/typed_example_cffi.py
 
 # Run benchmarks
 .PHONY: benchmark

@@ -1,5 +1,6 @@
 *.egg-info
 *.so
+*.o
 .DS_Store
 build
 cython_processor.cpp
@@ -7,3 +8,7 @@ cython_processor.cpp
 
 # Benchmark results
 benchmarks/results.json
+
+# cffi generated files
+src/cffi_processor/_cffi_impl.c
+src/cffi_processor/cffi_processor/
