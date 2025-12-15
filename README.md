@@ -131,15 +131,20 @@ def process_batches(data_batches: List[npt.NDArray], batch_size: int) -> List[np
 
 ## Single Source of Truth for Types
 
-This project demonstrates how to maintain a single source of truth for data types between C++ and Python. The approach works as follows:
+This project demonstrates how to maintain a single source of truth for data types between C++ and Python. The core approach:
 
-1. Core type definitions are placed in a central C++ header file
-2. Cython declarations in `.pxd` import these types
-3. Type information is exposed to Python through a dedicated function
-4. The same types are used consistently in both C++ and Python code
+1. **Central C++ definitions** - All types are defined in `src/common/types.hpp`
+2. **Binding-specific integration** - Each technology imports types its own way:
+   - **Cython**: `.pxd` declaration files reference C++ types
+   - **pybind11/nanobind**: Direct `#include` of the header
+   - **SWIG**: Interface file imports type declarations
+   - **ctypes/cffi**: C wrapper layer exposes compatible types
+   - **HPy**: C wrapper functions use the shared types
+3. **Python-side exposure** - Each implementation provides a `get_type_info()` function returning the active type configuration
 
 ### Benefits:
-- Changes to a type only need to be made in one place
+- Changes to a type only need to be made in one place (the C++ header)
+- Consistent behavior across all seven binding implementations
 - Automatic conversion between C++ and NumPy types
 - Type safety between languages
 - Self-documenting code with explicit type mappings
