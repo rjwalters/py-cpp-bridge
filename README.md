@@ -332,12 +332,12 @@ Performance comparison of all binding implementations using `pytest-benchmark`. 
 | **pybind11** | 14.39 ms | 15.09 ms | 13.45 ms | 6.41 μs |
 | **nanobind** | 14.58 ms | 14.88 ms | 14.77 ms | 7.36 μs |
 | **SWIG** | 13.94 ms | 15.18 ms | 17.17 ms | 6.83 μs |
-| **ctypes** | 13.46 ms | 14.64 ms | 15.59 ms | 10.89 μs |
-| **cffi** | ~14 ms | ~15 ms | ~15 ms | ~8 μs |
+| **ctypes** | 14.27 ms | 14.89 ms | 15.41 ms | 10.58 μs |
+| **cffi** | 14.32 ms | 14.97 ms | 16.14 ms | 7.76 μs |
 | **HPy** | — | — | — | — |
 
 *Measured on Apple M3 Pro, Python 3.14, macOS 15.3, NumPy 2.3.5*
-*Benchmark run: 2025-12-13*
+*Benchmark run: 2025-12-14*
 
 **Note**: HPy is not available due to a Python 3.14 module export issue. **6 out of 7 bindings** are fully functional and benchmarked.
 

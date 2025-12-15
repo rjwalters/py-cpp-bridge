@@ -84,8 +84,8 @@ Each implementation exposes three memory handling patterns for processing NumPy 
 | pybind11   | 6.41 μs       | Excellent - Optimized C++ templates, type conversions |
 | SWIG       | 6.83 μs       | Very good - C wrapper layer adds minimal overhead |
 | nanobind   | 7.36 μs       | Good - Modern C++17 design, compact implementation |
-| cffi       | ~8 μs         | Good - Similar to ctypes, FFI indirection |
-| ctypes     | 10.89 μs      | Higher but acceptable - Function pointer indirection |
+| cffi       | 7.76 μs       | Good - Efficient FFI, between nanobind and ctypes |
+| ctypes     | 10.58 μs      | Higher but acceptable - Function pointer indirection |
 | HPy        | —             | Not available (Python 3.14 compatibility) |
 
 **Key Insights**:
@@ -115,9 +115,9 @@ Each implementation exposes three memory handling patterns for processing NumPy 
 | SWIG       | 13.94 ms     | 15.18 ms  | 17.17 ms    | 15.43 ms |
 | ctypes     | 13.46 ms     | 14.64 ms  | 15.59 ms    | 14.56 ms |
 | Cython     | 14.25 ms     | 15.17 ms  | 15.45 ms    | 14.96 ms |
-| pybind11   | 14.39 ms     | 15.09 ms  | 13.45 ms    | 14.31 ms |
-| nanobind   | 14.58 ms     | 14.88 ms  | 14.77 ms    | 14.74 ms |
-| cffi       | ~14 ms       | ~15 ms    | ~15 ms      | ~14.7 ms |
+| pybind11   | 14.98 ms     | 15.09 ms  | 13.45 ms    | 14.51 ms |
+| nanobind   | 14.22 ms     | 14.88 ms  | 14.77 ms    | 14.62 ms |
+| cffi       | 14.32 ms     | 14.97 ms  | 16.14 ms    | 15.14 ms |
 | HPy        | —            | —         | —           | —        |
 
 **Key Insights**:
@@ -294,8 +294,8 @@ Total Time ≈ Binding Overhead + (Array Size × Processing Time Per Element)
 ### cffi
 
 **Performance Profile**:
-- ✅ Good call overhead (~8 μs)
-- ✅ Competitive processing performance (~14-15 ms)
+- ✅ Good call overhead (7.76 μs)
+- ✅ Competitive processing performance (14.32-16.14 ms)
 - ✅ Excellent PyPy support
 - ✅ ABI mode (no compilation needed)
 
@@ -540,4 +540,4 @@ The performance difference is negligible for typical workloads—choose the bind
 ---
 
 *Benchmarks performed on Apple M3 Pro, macOS 15.3, Python 3.14, NumPy 2.3.5*
-*Last updated: 2025-12-13*
+*Last updated: 2025-12-14*

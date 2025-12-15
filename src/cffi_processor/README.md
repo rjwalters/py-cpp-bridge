@@ -49,8 +49,8 @@ result3 = processor.process_manual(data)        # Manual casting
 ## Performance Profiling
 
 ### Benchmark Results
-- **Call Overhead**: ~8 μs (good, similar to ctypes)
-- **Processing (10K elements)**: ~14 ms (preallocated), ~15 ms (new), ~15 ms (manual)
+- **Call Overhead**: 7.76 μs (good, between nanobind and ctypes)
+- **Processing (10K elements)**: 14.32 ms (preallocated), 14.97 ms (new), 16.14 ms (manual)
 
 ### Generate Flamegraph
 ```bash
