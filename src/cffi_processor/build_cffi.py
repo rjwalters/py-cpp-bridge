@@ -41,8 +41,9 @@ include_dirs = [
 ]
 
 # Set the source code for the extension module
+# Use "_cffi_impl" without package prefix so it's placed in the current directory
 ffibuilder.set_source(
-    "cffi_processor._cffi_impl",
+    "_cffi_impl",
     """
     #include "cffi_wrapper.h"
     """,
