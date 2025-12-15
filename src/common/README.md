@@ -1,6 +1,6 @@
 # Common C++ Implementation
 
-This directory contains the shared C++ implementation that all binding approaches (Cython, pybind11, nanobind, SWIG) wrap around.
+This directory contains the shared C++ implementation that all binding approaches (Cython, pybind11, nanobind, SWIG, ctypes, cffi, HPy) wrap around.
 
 ## Files
 

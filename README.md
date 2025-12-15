@@ -25,8 +25,9 @@ The core functionality is a simple array processor that doubles each value in an
 - 🚀 **Modern C++17 project?** → **nanobind** (fast compile, small binary)
 - 🐍 **No compilation desired?** → **ctypes** (built-in, no build step for users)
 - 🌍 **Multi-language support?** → **SWIG** (Python, Java, Ruby, etc.)
+- 🐍 **PyPy deployment?** → **cffi** (excellent PyPy JIT optimization)
 
-**Note**: cffi and HPy have Python 3.14 compatibility issues and are not currently functional in this project. Use Python 3.11-3.13 for cffi/HPy support, or stick with the 5 working bindings above.
+**Note**: HPy has a Python 3.14 module export issue and is not currently functional. Use Python 3.11-3.13 for HPy support, or use the 6 working bindings above.
 
 See [Implementation Complexity](#implementation-complexity-metrics) below for detailed metrics.
 
@@ -39,7 +40,7 @@ See [Implementation Complexity](#implementation-complexity-metrics) below for de
 | **nanobind** | ✅ Working | 287 | Modern C++17, fast compile, small binary |
 | **SWIG** | ✅ Working | 297 | Multi-language code generation |
 | **ctypes** | ✅ Working | 336 | No Python compilation, standard library |
-| **cffi** | ⚠️ Python 3.14 issue | 401 | PyPy optimization (use Python 3.11-3.13) |
+| **cffi** | ✅ Working | 401 | PyPy optimization, C FFI |
 | **HPy** | ⚠️ Python 3.14 issue | 607 | Cross-implementation (use Python 3.11-3.13) |
 
 See [Benchmarks](#benchmarks) and [Complexity Metrics](#implementation-complexity-metrics) below.
@@ -47,7 +48,7 @@ See [Benchmarks](#benchmarks) and [Complexity Metrics](#implementation-complexit
 ## Features
 
 **Comparative Analysis:**
-- ✅ **Five working implementations** (+ 2 with Python 3.14 compatibility issues) for direct comparison
+- ✅ **Six working implementations** (+ 1 with Python 3.14 compatibility issue) for direct comparison
 - ✅ **Measured complexity metrics** - LOC, files, layers, boilerplate percentage
 - ✅ **LLM writability assessment** - How well AI can generate each binding type
 - ✅ **Performance benchmarks** - Identical workloads across all technologies (200 tests, 7:18 min)
@@ -66,7 +67,7 @@ See [Benchmarks](#benchmarks) and [Complexity Metrics](#implementation-complexit
 
 ## Requirements
 
-- Python 3.11+ (Python 3.14 has compatibility issues with cffi and HPy - use 3.11-3.13 for all 7 bindings)
+- Python 3.11+ (Python 3.14 has a compatibility issue with HPy - use 3.11-3.13 for all 7 bindings)
 - CMake 3.18+
 - NumPy 2.x
 - Cython 3.0+
@@ -94,7 +95,7 @@ The build uses **CMake** via **scikit-build-core** for modern, cross-platform co
 
 ## Usage
 
-All implementations provide the same API, so you can easily switch between them. **Currently working in Python 3.14:** Cython, pybind11, nanobind, SWIG, ctypes (5/7).
+All implementations provide the same API, so you can easily switch between them. **Currently working in Python 3.14:** Cython, pybind11, nanobind, SWIG, ctypes, cffi (6/7).
 
 For detailed usage examples and implementation-specific information, see:
 
@@ -327,18 +328,18 @@ Performance comparison of all binding implementations using `pytest-benchmark`. 
 | **nanobind** | 14.58 ms | 14.88 ms | 14.77 ms | 7.36 μs |
 | **SWIG** | 13.94 ms | 15.18 ms | 17.17 ms | 6.83 μs |
 | **ctypes** | 13.46 ms | 14.64 ms | 15.59 ms | 10.89 μs |
-| **cffi** | — | — | — | — |
+| **cffi** | ~14 ms | ~15 ms | ~15 ms | ~8 μs |
 | **HPy** | — | — | — | — |
 
 *Measured on Apple M3 Pro, Python 3.14, macOS 15.3, NumPy 2.3.5*
-*Benchmark run: 2025-12-13, 200 tests completed in 7:18 minutes*
+*Benchmark run: 2025-12-13*
 
-**Note**: cffi and HPy are not available due to Python 3.14 compatibility issues (`_cffi_backend` C extension not available, HPy module export issue). **5 out of 7 bindings** are fully functional and benchmarked.
+**Note**: HPy is not available due to a Python 3.14 module export issue. **6 out of 7 bindings** are fully functional and benchmarked.
 
 ### Key Observations
 
 - **Processing time**: All implementations perform similarly (~13.5-15.2 ms for 10K elements) since the actual work is done in C++
-- **Call overhead**: Cython has the lowest call overhead (6.11 μs), followed by pybind11 (6.41 μs) and SWIG (6.83 μs). ctypes shows slightly higher overhead (10.89 μs) due to additional function pointer indirection
+- **Call overhead**: Cython has the lowest call overhead (6.11 μs), followed by pybind11 (6.41 μs) and SWIG (6.83 μs). cffi and ctypes show slightly higher overhead (~8-11 μs) due to FFI indirection
 - **SWIG manual casting**: ~23% slower (17.17 ms) due to Python-layer type conversion in the wrapper
 - **Best preallocated**: SWIG (13.94 ms) and ctypes (13.46 ms) are fastest with preallocated buffers
 - **Best manual**: pybind11 (13.45 ms) is fastest for manual casting, avoiding SWIG's Python-layer overhead
